@@ -8,6 +8,7 @@
  * \version		0.1
  *
  * \note		This is a developer preview.
+ * \warning		Tests the serial interface!
  *
  * \section Introduction
  * \section Architecture
@@ -15,7 +16,25 @@
  * \section Hardware
  */
 
+#include <stdint.h>
+#include <string.h>
 
+#include "bsp_serial.h"
+
+
+/**
+ * \brief	A blocked time delay.
+ */
+void delay(void) {
+	volatile uint32_t ctr;
+
+	for (ctr=0; ctr<0x3FFF; ctr++) {
+
+	}
+}
+
+/** Demo string to test the serial interface. */
+char msg[] = "Hallo Welt! Der Text wie immer bei diesen Programmierern :) \r\n";
 
 /**
  * \brief	Main function. Will be called after the startup sequence.
@@ -23,9 +42,21 @@
  * \return	This function should never finished.
  */
 int main(void) {
+	uint32_t length;
+	uint32_t written;
+
+	bsp_SerialInit();
 
 	/* Infinite loop */
 	while (1) {
+		length = strlen(msg);
+		written = 0;
 
+		do {
+			written += bsp_SerialStringPut(&(msg[written]), length - written);
+		}
+		while (written != length);
+
+		delay();
 	}
 }
