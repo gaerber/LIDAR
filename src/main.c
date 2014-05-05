@@ -28,7 +28,7 @@
 void delay(void) {
 	volatile uint32_t ctr;
 
-	for (ctr=0; ctr<0x3FFF; ctr++) {
+	for (ctr=0; ctr<0x3FFFFF; ctr++) {
 
 	}
 }
@@ -42,21 +42,47 @@ char msg[] = "Hallo Welt! Der Text wie immer bei diesen Programmierern :) \r\n";
  * \return	This function should never finished.
  */
 int main(void) {
+	volatile uint32_t i;
 	uint32_t length;
 	uint32_t written;
 
+	/* Ensure all priority bits are assigned as preemption priority bits. */
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+
+
 	bsp_SerialInit();
+
+	/* Enable IRQ */
+	__enable_irq();
+
+//	for (i=0; i<0x3FFFFF; i++) {
+//
+//	}
 
 	/* Infinite loop */
 	while (1) {
 		length = strlen(msg);
 		written = 0;
 
+//		for (written=0; written<length; ) {
+//			if (bsp_SerialCharPut(msg[written])) {
+//				written++;
+//			}
+//			else {
+//				i++;
+//			}
+//		}
+
 		do {
 			written += bsp_SerialStringPut(&(msg[written]), length - written);
+			if (written < length) {
+				i++;
+			}
 		}
 		while (written != length);
 
 		delay();
 	}
+
+	return 0;
 }

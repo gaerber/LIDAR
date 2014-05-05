@@ -5,6 +5,8 @@
  * \version     0.2
  * \author		Kevin Gerber
  *
+ * \note		Read and write pointer overflow tested.
+ *
  * \addtogroup  bsp
  * @{
  *
@@ -24,7 +26,6 @@
 
 /**
  * \brief	Circular buffer structure.
- * \note	Should be a static data type!
  */
 typedef struct {
 	uint32_t tx_read;				/*!< TX buffer start index (reading) */
@@ -129,14 +130,14 @@ void bsp_SerialIrqRxHandler(void) {
 /**
  * \brief	Initialize the UART for the user communication.
  * 			The UART will be configured with the following settings:
- * 			(+) 115200 baud
- * 			(+) 8 data bit
- * 			(+) one stop bit
- * 			(+) without a parity check bit
- * 			(+) without flow control
- * 			(+) RX/TX interrupts
- * 			This configuration is set in the header file.
- * \todo	Check if USART_Cmd() is necessary.
+ * 			- 115200 baud
+ * 			- 8 data bit
+ * 			- one stop bit
+ * 			- without a parity check bit
+ * 			- without flow control
+ * 			- RX/TX interrupts
+ * 			.
+ * 			This configuration is set in the header file bsp_serial.h.
  */
 void bsp_SerialInit(void) {
 	USART_InitTypeDef USART_InitStructure;
@@ -192,7 +193,7 @@ void bsp_SerialInit(void) {
 
 /**
  * \brief	Puts a character into the circular buffer.
- * \param	a is the character, which will put into the circular buffer.
+ * \param[in]	a is the character, which will put into the circular buffer.
  * \return	True if the character was put into the circular buffer, otherwise false.
  */
 uint8_t bsp_SerialCharPut(char a) {
@@ -218,7 +219,7 @@ uint8_t bsp_SerialCharPut(char a) {
 
 /**
  * \brief	Reads a character from the circular buffer and gives it to the user.
- * \param	a Reference to the character storage.
+ * \param[out]	a Reference to the character storage.
  * \return	False if no character is available in the circular buffer.
  */
 uint8_t bsp_SerialCharGet(char *a) {
@@ -236,8 +237,8 @@ uint8_t bsp_SerialCharGet(char *a) {
 
 /**
  * \brief	Puts a string into the circular buffer.
- * \param	string is a pointer of the char array.
- * \param	length is the length of the string, who will be sent.
+ * \param[in]	string is a pointer of the char array.
+ * \param[in]	length is the length of the string, who will be sent.
  * \return	The number of character, which were placed successfully in the circular buffer.
  */
 uint32_t bsp_SerialStringPut(char *string, uint32_t length) {
@@ -248,7 +249,7 @@ uint32_t bsp_SerialStringPut(char *string, uint32_t length) {
 		success = bsp_SerialCharPut(string[sendet_char]);
 	}
 
-	/* Correction if no space was aviable */
+	/* Correction if no space was available */
 	if (success == 0) {
 		sendet_char--;
 	}
