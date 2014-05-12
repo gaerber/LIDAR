@@ -108,6 +108,11 @@ void bsp_SPIIrqRxHandler(void) {
 		}
 		bsp_SPIChipDeselect(g_SpiElement.chip);
 		g_CircularBuffer.sending = 0;
+		/* Check if data are available to send */
+		if (g_CircularBuffer.read != g_CircularBuffer.write) {
+			/* Start new transmission */
+			bsp_SPITxIrqEnable();
+		}
 	}
 }
 
@@ -144,7 +149,7 @@ void bsp_SPIIrqTxHandler(void) {
  */
 
 /**
- * \brief	Initialize all hardware components.
+ * \brief	Initialize the SPI interface in master mode. Clock speed is set to 10.5MHz.
  */
 void bsp_SPIInit(void) {
 	uint32_t i;
@@ -182,7 +187,7 @@ void bsp_SPIInit(void) {
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;//SPI_CPHA_2Edge;
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
 	SPI_Init(BSP_SPI_PORT, &SPI_InitStructure);
@@ -208,14 +213,14 @@ void bsp_SPIInit(void) {
 }
 
 /**
- * \brief	Select the GP22 chip.
+ * \brief	Select a chip.
  */
 void bsp_SPIChipSelect(bsp_spics_t chip) {
 	GPIO_ResetBits(BSP_SPI_CS[chip].base, BSP_SPI_CS[chip].pin);
 }
 
 /**
- * \brief	Deselect the GP22 chip.
+ * \brief	Deselect a chip.
  */
 void bsp_SPIChipDeselect(bsp_spics_t chip) {
 	GPIO_SetBits(BSP_SPI_CS[chip].base, BSP_SPI_CS[chip].pin);
@@ -260,9 +265,9 @@ void bsp_SPITxIrqDisable(void) {
  * 			will be in interrupt mode.
  * \param 	chip A reference to the chip, which will be selected during the transmission.
  * \param	data Array of data, to transmit.
- * \param	len Length of the data array. Maximum length is defined in \var BSP_SPI_BUFSIZE_DATA.
+ * \param	len Length of the data array. Maximum length is defined in BSP_SPI_BUFSIZE_DATA.
  * \param	calback	Callback function to manage the received data. It will be called in the SPI
- * 			interrupt. If no data must be received, set it to \var NULL.
+ * 			interrupt. If no data must be received, set it to \c NULL.
  * \return	TRUE if the data were stored in the buffer, FALSE if no space is available.
  */
 uint8_t bsp_SPITransmit(bsp_spics_t chip, uint8_t *data, uint8_t len, bsp_spicallback_t calback) {

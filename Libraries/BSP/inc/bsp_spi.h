@@ -44,7 +44,7 @@ typedef void (*bsp_spicallback_t)(uint8_t *rx_data, uint8_t size);
 
 /**
  * \brief		List off all chip selects, which are supported by the SPI interface.
- * \important	All chip selects require an entry in the BSP_SPI_CS array with
+ * \warning		All chip selects require an entry in the BSP_SPI_CS array with
  * 				the correct hardware labels.
  */
 typedef enum {
@@ -81,7 +81,7 @@ static const bsp_gpioconf_t BSP_SPI_PORT_LABEL[] = {
 
 /*
  * ----------------------------------------------------------------------------
- * Prototypes
+ * Function prototypes
  * ----------------------------------------------------------------------------
  */
 extern void bsp_SPIInit(void);
