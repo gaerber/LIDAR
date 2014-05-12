@@ -16,7 +16,7 @@
  * \brief	Initialize a GPIO in standard or alternate function mode.
  * \param	port Pointer to the GPIO configuration structure.
  */
-void bsg_GpioInit(const bsp_gpioconf_t *port) {
+void bsp_GpioInit(const bsp_gpioconf_t *port) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	/* GPIO Peripheral clock enable */
