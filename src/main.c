@@ -19,7 +19,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bsp_led.h"
+#include "stm32f4xx.h"
+#include "bsp_spi.h"
 
 
 /**
@@ -42,24 +43,22 @@ char msg[] = "Hallo Welt! Der Text wie immer bei diesen Programmierern :) \r\n";
  * \return	This function should never finished.
  */
 int main(void) {
+	uint8_t data[] = {0x55, 0xAA, 0x00, 0xFF};
+	uint32_t ctr = 0;
+
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-	bsp_LedInit();
+	bsp_SPIInit();
 
 	/* Enable IRQ */
 	__enable_irq();
 
 	/* Infinite loop */
 	while (1) {
-		bsp_LedSetToggle(BSP_LED_OUT_0);
-		bsp_LedSetToggle(BSP_LED_OUT_1);
-		bsp_LedSetToggle(BSP_LED_OUT_2);
-		bsp_LedSetToggle(BSP_LED_OUT_3);
-		bsp_LedSetOn(BSP_LED_GREEN);
-		delay();
-		bsp_LedSetOff(BSP_LED_GREEN);
-		delay();
+		if (!bsp_SPITransmit(BSP_SPI_CS_GP22, data, 4, NULL)) {
+			ctr++;
+		}
 	}
 
 	return 0;
