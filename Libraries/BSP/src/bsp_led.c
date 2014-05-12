@@ -16,6 +16,12 @@
 #include "bsp_led.h"
 
 
+/*
+ * ----------------------------------------------------------------------------
+ * Implementation
+ * ----------------------------------------------------------------------------
+ */
+
 /**
  * \brief	Initialize all LEDs on the board and sets them off as default.
  */
@@ -25,7 +31,7 @@ void bsp_LedInit(void) {
 	/* Initialize all registred LED from the port array. */
 	for (i_led=0; i_led < BSP_LED_ELEMENTCTR; i_led++) {
 		/* Initialize all GPIOs in their function */
-		bsg_GpioInit(&(BSP_LED_PORTS[i_led]));
+		bsp_GpioInit(&(BSP_LED_PORTS[i_led]));
 
 		/* Set the LEDs off as the default state. */
 		bsp_LedSetOff(i_led);
@@ -64,7 +70,6 @@ void bsp_LedSetToggle(bsp_led_t led) {
 	/* Turns GPIO State high */
 	GPIO_ToggleBits(BSP_LED_PORTS[led].base, BSP_LED_PORTS[led].pin);
 }
-
 
 /**
  * @}
