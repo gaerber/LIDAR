@@ -108,7 +108,7 @@ typedef struct {
  * Function prototypes
  * ----------------------------------------------------------------------------
  */
-extern void bsg_GpioInit(const bsp_gpioconf_t *port);
+extern void bsp_GpioInit(const bsp_gpioconf_t *port);
 
 
 #endif /* BSP_H_ */

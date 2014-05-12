@@ -144,8 +144,8 @@ void bsp_SerialInit(void) {
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	/* Initialize all GPIOs in their function */
-	bsg_GpioInit(&BSP_SERIAL_RX);
-	bsg_GpioInit(&BSP_SERIAL_TX);
+	bsp_GpioInit(&BSP_SERIAL_RX);
+	bsp_GpioInit(&BSP_SERIAL_TX);
 
 	/* UART Peripheral clock enable */
 	if (BSP_SERIAL_PERIPH == RCC_APB2Periph_USART1 || BSP_SERIAL_PERIPH == RCC_APB2Periph_USART6) {
