@@ -17,6 +17,10 @@
 
 #include "stm32f4xx.h"
 
+#ifndef NULL
+#define NULL 0			/*!< Define Null if string.h is not used. */
+#endif
+
 /**
  * \brief	Assert makro.
  * \param	cond	Conditions, which must be true.
@@ -36,6 +40,17 @@ typedef struct {
 	GPIOPuPd_TypeDef pupd;	/*!< GPIO pull up / pull down mode. */
 	uint8_t af;				/*!< GPIO alternate function. */
 } bsp_gpioconf_t;
+
+
+/**
+ * \brief	All available PWM controller and channel.
+ */
+typedef enum {
+	CHANEL1,		/*!< PWM Channel 1 */
+	CHANEL2,		/*!< PWM Channel 2 */
+	CHANEL3,		/*!< PWM Channel 3 */
+	CHANEL4			/*!< PWM Channel 4 */
+} bsp_pwmport_t;
 
 
 /**
