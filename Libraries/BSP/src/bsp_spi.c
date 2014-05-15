@@ -1,14 +1,14 @@
 /**
- * \file        bsp_spi.c
- * \brief       Supports the SPI for the communication with the TDC GP22.
- * \date        2014-05-12
- * \version     0.3
+ * \file		bsp_spi.h
+ * \brief		Supports all SPI for the communication.
+ * \date		2014-05-12
+ * \version		0.3
  * \author		Kevin Gerber
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * @{
  *
- * \addtogroup  bsp_spi
+ * \addtogroup	bsp_spi
  * @{
  */
 
@@ -68,9 +68,9 @@ void bsp_SPIInit(void) {
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;//SPI_CPHA_2Edge;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;	/* Falling clock edge */
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;	/* SPI_BaudRatePrescaler_8 -> 10.5MHz */
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
 	SPI_Init(BSP_SPI_PORT, &SPI_InitStructure);
@@ -114,10 +114,10 @@ void bsp_SPIReceiveByte(uint8_t *data) {
  * \brief	Send a data block over SPI to a chip.
  * 			This is an non blocking function. The data were buffered and the transfer
  * 			will be in interrupt mode.
- * \param 	chip A reference to the chip, which will be selected during the transmission.
- * \param	tx_data Array of data, to transmit.
- * \param	len Length of the data array. Maximum length is defined in BSP_SPI_BUFSIZE_DATA.
- * \param	rx_data Data storage of the received data.
+ * \param[in] 	chip A reference to the chip, which will be selected during the transmission.
+ * \param[in]	tx_data Array of data, to transmit.
+ * \param[in]	len Length of the data array. Maximum length is defined in BSP_SPI_BUFSIZE_DATA.
+ * \param[out]	rx_data Data storage of the received data.
  * \return	TRUE if transmission successes, otherwise FALSE.
  */
 uint8_t bsp_SPITransmitBlocked(bsp_spics_t chip, const uint8_t *tx_data, uint8_t len, uint8_t *rx_data) {
@@ -127,9 +127,11 @@ uint8_t bsp_SPITransmitBlocked(bsp_spics_t chip, const uint8_t *tx_data, uint8_t
 
 	/* Parameter check */
 	assert(chip < BSP_SPI_CS_ELEMENTCTR);
+	assert(tx_data);
+	assert(len > 0);
 
 	/* Select the chip */
-	bsp_SPIChipSelect(BSP_SPI_CS_GP22);
+	bsp_SPIChipSelect(chip);
 
 	for (ctr=0; ctr<len; ctr++) {
 		/* Send one byte */
@@ -158,7 +160,7 @@ uint8_t bsp_SPITransmitBlocked(bsp_spics_t chip, const uint8_t *tx_data, uint8_t
 	}
 
 	/* Transmission finished, deselect the chip */
-	bsp_SPIChipDeselect(BSP_SPI_CS_GP22);
+	bsp_SPIChipDeselect(chip);
 
 	return success;
 }
