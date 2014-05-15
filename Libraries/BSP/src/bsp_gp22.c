@@ -1,14 +1,14 @@
 /**
- * \file        bsp_gp22.c
- * \brief       Supports all functions to manage the TDC GP22.
- * \date        2014-05-12
- * \version     0.1
+ * \file		bsp_gp22.h
+ * \brief		Supports all functions to manage the TDC GP22.
+ * \date		2014-05-12
+ * \version		0.1
  * \author		Kevin Gerber
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * @{
  *
- * \addtogroup  bsp_gp22
+ * \addtogroup	bsp_gp22
  * @{
  */
 
@@ -25,20 +25,20 @@
 /** User defined TDC-GP22 interrupt callback function */
 static bsp_gp22callback_t g_int_callback;
 
-/** TDC-GP22 register 0 configuration */
-static const uint8_t g_register_0[] = {WR_REG_0, BSP_GP22_REG0};
-/** TDC-GP22 register 1 configuration */
-static const uint8_t g_register_1[] = {WR_REG_1, BSP_GP22_REG1};
-/** TDC-GP22 register 2 configuration */
-static const uint8_t g_register_2[] = {WR_REG_2, BSP_GP22_REG2};
-/** TDC-GP22 register 3 configuration */
-static const uint8_t g_register_3[] = {WR_REG_3, BSP_GP22_REG3};
-/** TDC-GP22 register 4 configuration */
-static const uint8_t g_register_4[] = {WR_REG_4, BSP_GP22_REG4};
-/** TDC-GP22 register 5 configuration */
-static const uint8_t g_register_5[] = {WR_REG_5, BSP_GP22_REG5};
-/** TDC-GP22 register 6 configuration */
-static const uint8_t g_register_6[] = {WR_REG_6, BSP_GP22_REG6};
+///** TDC-GP22 register 0 configuration */
+//static const uint8_t g_register_0[] = {GP22_WR_REG_0, BSP_GP22_REG0};
+///** TDC-GP22 register 1 configuration */
+//static const uint8_t g_register_1[] = {GP22_WR_REG_1, BSP_GP22_REG1};
+///** TDC-GP22 register 2 configuration */
+//static const uint8_t g_register_2[] = {GP22_WR_REG_2, BSP_GP22_REG2};
+///** TDC-GP22 register 3 configuration */
+//static const uint8_t g_register_3[] = {GP22_WR_REG_3, BSP_GP22_REG3};
+///** TDC-GP22 register 4 configuration */
+//static const uint8_t g_register_4[] = {GP22_WR_REG_4, BSP_GP22_REG4};
+///** TDC-GP22 register 5 configuration */
+//static const uint8_t g_register_5[] = {GP22_WR_REG_5, BSP_GP22_REG5};
+///** TDC-GP22 register 6 configuration */
+//static const uint8_t g_register_6[] = {GP22_WR_REG_6, BSP_GP22_REG6};
 
 
 /*
@@ -48,6 +48,7 @@ static const uint8_t g_register_6[] = {WR_REG_6, BSP_GP22_REG6};
  */
 uint8_t bsp_GP22Configure(void);
 uint32_t bytes2long(uint8_t *bytes);
+uint16_t bytes2short(uint8_t *bytes);
 
 
 /*
@@ -63,9 +64,12 @@ uint32_t bytes2long(uint8_t *bytes);
 void BSP_GP22_IRQ_Handler(void) {
 	/* GP22 INT falling edge interrupt */
     if(EXTI_GetITStatus(BSP_GP22_INT.pin) != RESET) {
-        EXTI_ClearITPendingBit(BSP_GP22_INT.pin);
-        if (g_int_callback != NULL) {
-        	g_int_callback();
+        /* Clear the interrupt flag */
+    	EXTI_ClearITPendingBit(BSP_GP22_INT.pin);
+        /* Check if an user defined clallback function is set */
+    	if (g_int_callback != NULL) {
+        	/* Execute the user defined callback function */
+    		g_int_callback();
         }
     }
 }
@@ -137,37 +141,102 @@ uint8_t bsp_GP22Configure(void) {
 	uint8_t success = 1;
 
 	/* Send opcode for the reset */
-	success &= bsp_GP22Opcode(OP_Power_On_Reset);
+	success &= bsp_GP22SendOpcode(GP22_OP_Power_On_Reset);
 
 	/* Set register 0 to 6 */
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_0, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_1, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_2, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_3, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_4, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_5, 5, NULL);
-	success &= bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, g_register_6, 5, NULL);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_0, BSP_GP22_REG0);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_1, BSP_GP22_REG1);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_2, BSP_GP22_REG2);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_3, BSP_GP22_REG3);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_4, BSP_GP22_REG4);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_5, BSP_GP22_REG5);
+	success &= bsp_GP22RegWrite(GP22_WR_REG_6, BSP_GP22_REG6);
 
 	return success;
 }
 
 /**
- * \brief	Sends an opcode to the TDC-GP22.
- * \param[in]	op is the opcode, which will be sent.
- * \return	True if the opcode was sent, otherwise FALSE.
+ * \brief	Sends an operation code to the TDC-GP22.
+ * \param[in]	op is the operation code, which will be sent.
+ * \return	FALSE if the SPI transmission get a time out.
  */
-uint8_t bsp_GP22Opcode(gp22_opcode_t op) {
-	uint8_t success = 0;
-	uint8_t tx_byte;
+uint8_t bsp_GP22SendOpcode(uint8_t op) {
+	uint8_t success;
 
-	tx_byte = op;
+	assert(GP22_IS_OP(op));
 
-	/* Transmitting */
-	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, &tx_byte, 1, NULL);
+	/* Transmitting operation code */
+	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, &op, 1, NULL);
 
 	return success;
 }
 
+/**
+ * \brief	Sets a Register of the TDC-GP22.
+ * \param[in]	reg is the writable register of the GP22.
+ * \param[in]	new_reg_val is the new register value.
+ * \return	FALSE if the SPI transmission get a time out.
+ */
+uint8_t bsp_GP22RegWrite(uint8_t reg, uint32_t new_reg_val) {
+	uint8_t success;
+	uint8_t tx_bytes[5];
+
+	assert(GP22_IS_WR(reg));
+
+	/* Convert the data to an unsigned 8 bit integer */
+	tx_bytes[0] = reg;
+	tx_bytes[1] = (new_reg_val & 0xFF000000) >> 24;
+	tx_bytes[2] = (new_reg_val & 0x00FF0000) >> 16;
+	tx_bytes[3] = (new_reg_val & 0x0000FF00) >> 8;
+	tx_bytes[4] = (new_reg_val & 0x000000FF) >> 0;
+
+	/* Set the selected register */
+	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, tx_bytes, 5, NULL);
+
+	return success;
+}
+
+/**
+ * \brief	Sets a Register of the TDC-GP22.
+ * \param[in]	reg is the readable register of the GP22.
+ * \param[out]	value is a pointer to the storage of the register value.
+ * \param[in]	len indicates how many bytes have to read.
+ * \return	FALSE if the SPI transmission get a time out.
+ */
+uint8_t bsp_GP22RegRead(uint8_t reg, uint32_t *value, uint8_t len) {
+	uint8_t success;
+	uint8_t tx_bytes[5];
+	uint8_t rx_bytes[5];
+
+	assert(GP22_IS_RD(reg));
+	assert(len==2 || len==4);
+
+	/* First send a read command */
+	tx_bytes[0] = reg;
+	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, tx_bytes, len+1, rx_bytes);
+
+	/* Transform received bytes to a 32 bit integer */
+	if (success) {
+		if (len == 2) {
+			*value = bytes2short(&(rx_bytes[1]));
+		}
+		else if (len == 4) {
+			*value = bytes2long(&(rx_bytes[1]));
+		}
+		else {
+			success = 0;
+		}
+	}
+
+	return success;
+}
+
+
+/**
+ * \brief	Converts a received byte array from the SPI interface to a unsigned 32 bit integer.
+ * \param[in]	bytes Array with four bytes. MSB first.
+ * \return	Converted unsigned 32 bit integer.
+ */
 uint32_t bytes2long(uint8_t *bytes) {
 	uint32_t res_long;
 
@@ -179,38 +248,18 @@ uint32_t bytes2long(uint8_t *bytes) {
 	return res_long;
 }
 
-uint8_t bsp_GP22ReadState(uint32_t *stat) {
-	uint8_t success = 0;
-	uint8_t tx_bytes[5];
-	uint8_t rx_bytes[5];
+/**
+ * \brief	Converts a received byte array from the SPI interface to a unsigned 16 bit integer.
+ * \param[in]	bytes Array with two bytes. MSB first.
+ * \return	Converted unsigned 16 bit integer.
+ */
+uint16_t bytes2short(uint8_t *bytes) {
+	uint16_t res_long;
 
-	/* Read from register stat */
-	tx_bytes[0] = RD_STAT;
-	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, tx_bytes, 5, rx_bytes);
+	res_long = bytes[1];
+	res_long |= bytes[0] << 8;
 
-	/* Transform received bytes to a 32 bit integer */
-	if (success) {
-		*stat = bytes2long(&(rx_bytes[1]));
-	}
-
-	return success;
-}
-
-uint8_t bsp_GP22ReadTimeDelay(uint32_t *result) {
-	uint8_t success = 0;
-	uint8_t tx_bytes[5];
-	uint8_t rx_bytes[5];
-
-	/* Read from register stat */
-	tx_bytes[0] = RD_RES_3;
-	success = bsp_SPITransmitBlocked(BSP_SPI_CS_GP22, tx_bytes, 5, rx_bytes);
-
-	/* Transform received bytes to a 32 bit integer */
-	if (success) {
-		*result = bytes2long(&(rx_bytes[1]));
-	}
-
-	return success;
+	return res_long;
 }
 
 /**
