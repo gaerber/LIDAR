@@ -25,21 +25,6 @@
 /** User defined TDC-GP22 interrupt callback function */
 static bsp_gp22callback_t g_int_callback;
 
-///** TDC-GP22 register 0 configuration */
-//static const uint8_t g_register_0[] = {GP22_WR_REG_0, BSP_GP22_REG0};
-///** TDC-GP22 register 1 configuration */
-//static const uint8_t g_register_1[] = {GP22_WR_REG_1, BSP_GP22_REG1};
-///** TDC-GP22 register 2 configuration */
-//static const uint8_t g_register_2[] = {GP22_WR_REG_2, BSP_GP22_REG2};
-///** TDC-GP22 register 3 configuration */
-//static const uint8_t g_register_3[] = {GP22_WR_REG_3, BSP_GP22_REG3};
-///** TDC-GP22 register 4 configuration */
-//static const uint8_t g_register_4[] = {GP22_WR_REG_4, BSP_GP22_REG4};
-///** TDC-GP22 register 5 configuration */
-//static const uint8_t g_register_5[] = {GP22_WR_REG_5, BSP_GP22_REG5};
-///** TDC-GP22 register 6 configuration */
-//static const uint8_t g_register_6[] = {GP22_WR_REG_6, BSP_GP22_REG6};
-
 
 /*
  * ----------------------------------------------------------------------------
