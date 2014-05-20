@@ -129,13 +129,12 @@ int main(void) {
 		bsp_GP22SendOpcode(GP22_OP_Init);
 
 		/* Simulate the hardware */
-		bsp_LedSetOn(BSP_LED_OUT_0);
-		bsp_LedSetToggle(BSP_LED_OUT_3);
 		bsp_LedSetOn(BSP_LED_OUT_1);
 		bsp_LedSetOn(BSP_LED_OUT_2);
-		bsp_LedSetOff(BSP_LED_OUT_0);
+		bsp_LedSetOn(BSP_LED_OUT_3);
 		bsp_LedSetOff(BSP_LED_OUT_1);
 		bsp_LedSetOff(BSP_LED_OUT_2);
+		bsp_LedSetOff(BSP_LED_OUT_3);
 
 		delay();
 
