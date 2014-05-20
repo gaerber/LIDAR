@@ -33,7 +33,7 @@
  */
 typedef enum {
 	BSP_LED_GREEN = 0,		/*!< The green LED identification number. */
-	BSP_LED_OUT_0,			/*!< Carme IO2 OUT0 LED */
+	//BSP_LED_OUT_0,			/*!< Carme IO2 OUT0 LED */
 	BSP_LED_OUT_1,			/*!< Carme IO2 OUT1 LED */
 	BSP_LED_OUT_2,			/*!< Carme IO2 OUT2 LED */
 	BSP_LED_OUT_3,			/*!< Carme IO2 OUT3 LED */
@@ -45,7 +45,7 @@ typedef enum {
  */
 static const bsp_gpioconf_t BSP_LED_PORTS[] = {
 	{RCC_AHB1Periph_GPIOI, GPIOI, GPIO_Pin_6, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_GREEN */
-	{RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_0, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_0 */
+	//{RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_0, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_0 */
 	{RCC_AHB1Periph_GPIOH, GPIOH, GPIO_Pin_11, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_1 */
 	{RCC_AHB1Periph_GPIOH, GPIOH, GPIO_Pin_12, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_2 */
 	{RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_8, GPIO_Mode_OUT, GPIO_PuPd_NOPULL}	/* BSP_LED_OUT_3 */
