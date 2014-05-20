@@ -23,8 +23,8 @@
 #include "bsp.h"
 #include "bsp_led.h"
 #include "bsp_gp22.h"
-
 #include "bsp_serial.h"
+#include "bsp_quadenc.h"
 
 extern int siprintf(char *buf, const char *fmt, ...);
 
@@ -80,7 +80,7 @@ void tdcIntCallback(void) {
  * \return	This function should never finished.
  */
 int main(void) {
-	//uint32_t dummy;
+	uint32_t dummy;
 
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
@@ -92,6 +92,8 @@ int main(void) {
 	bsp_LedInit();
 	bsp_GP22Init();
 	bsp_GP22IntCallback(tdcIntCallback);
+
+	bsp_QuadencInit();
 
 	/* Enable IRQ */
 	__enable_irq();
@@ -120,6 +122,8 @@ int main(void) {
 
 		/* Start TDC measurement */
 		//bsp_GP22Opcode(OP_Init);
+
+		dummy = bsp_QuadencGet();
 
 		while (!GPIO_ReadInputDataBit(BSP_CARME_T0.base, BSP_CARME_T0.pin)) {
 			// Wait until T0 is pressed
