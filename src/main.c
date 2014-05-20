@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bsp_led.h"
+#include "bsp_laser.h"
 
 
 /**
@@ -45,20 +45,14 @@ int main(void) {
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-	bsp_LedInit();
+	bsp_LaserInit();
 
 	/* Enable IRQ */
 	__enable_irq();
 
 	/* Infinite loop */
 	while (1) {
-		bsp_LedSetToggle(BSP_LED_OUT_0);
-		bsp_LedSetToggle(BSP_LED_OUT_1);
-		bsp_LedSetToggle(BSP_LED_OUT_2);
-		bsp_LedSetToggle(BSP_LED_OUT_3);
-		bsp_LedSetOn(BSP_LED_GREEN);
-		delay();
-		bsp_LedSetOff(BSP_LED_GREEN);
+		bsp_LaserPulse(10);
 		delay();
 	}
 

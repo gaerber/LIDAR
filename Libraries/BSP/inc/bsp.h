@@ -1,11 +1,11 @@
 /**
- * \file        bsp.h
- * \brief       Board support package.
- * \date        2014-04-15
- * \version     0.3
+ * \file		bsp.h
+ * \brief		Board support package.
+ * \date		2014-05-20
+ * \version		0.4
  * \author		Kevin Gerber
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * \brief		The board support package contains all medium layer functionality
  * 				to use the hardware module. The BSP is based on the standard peripheral
  * 				library from ST.
@@ -17,13 +17,12 @@
 
 #include "stm32f4xx.h"
 
-/**
- * \brief	Assert makro.
- * \param	cond	Conditions, which must be true.
- * \todo	Define an assert function.
- */
-#define assert(cond) //((cond)?(0): (fprintf (stderr, "assertion failed: \ %s, file %s, line %d \n",#cond,__FILE__,__LINE__), abort()))
 
+/*
+ * ----------------------------------------------------------------------------
+ * Data types
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * \brief	Structure of all important hardware configuration of each GPIO.
@@ -36,6 +35,31 @@ typedef struct {
 	GPIOPuPd_TypeDef pupd;	/*!< GPIO pull up / pull down mode. */
 	uint8_t af;				/*!< GPIO alternate function. */
 } bsp_gpioconf_t;
+
+
+/**
+ * \brief	All available PWM controller and channel.
+ */
+typedef enum {
+	CHANEL1,		/*!< PWM Channel 1 */
+	CHANEL2,		/*!< PWM Channel 2 */
+	CHANEL3,		/*!< PWM Channel 3 */
+	CHANEL4			/*!< PWM Channel 4 */
+} bsp_pwmport_t;
+
+
+/*
+ * ----------------------------------------------------------------------------
+ * Macros
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * \brief	Assert makro.
+ * \param	cond	Conditions, which must be true.
+ * \todo	Define an assert function.
+ */
+#define assert(cond) //((cond)?(0): (fprintf (stderr, "assertion failed: \ %s, file %s, line %d \n",#cond,__FILE__,__LINE__), abort()))
 
 
 /**

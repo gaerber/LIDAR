@@ -1,11 +1,11 @@
 /**
- * \file        bsp.c
- * \brief       Board support package main functions.
- * \date        2014-03-18
- * \version     0.2
+ * \file		bsp.c
+ * \brief		Board support package main functions.
+ * \date		2014-03-18
+ * \version		0.2
  * \author		Kevin Gerber
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * @{
  */
 
