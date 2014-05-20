@@ -1,7 +1,7 @@
 /**
  * \file		bsp_laser.h
  * \brief		Supports the laser pulse generator.
- * \date		2014-05-13
+ * \date		2014-05-20
  * \version		0.1
  * \author		Kevin Gerber
  *
@@ -27,9 +27,9 @@
 
 /** PWM frequency of the laser pulse generator. */
 #define BSP_LASER_FREQ				84000000
-/** Period register of the PWM. The frequency of the laser pulse replay is BSP_LASER_FREQ[Hz] / (BSP_LASER_PERIOD-1)  */
+/** Period register of the PWM. The frequency of the laser pulse replay is f = BSP_LASER_FREQ[Hz] / (BSP_LASER_PERIOD-1)  */
 #define BSP_LASER_PERIOD			1681
-/** Laser pulse width. The duty cycle is \f[ D = \frac{BSP_LASER_PULSE_WIDTH}{BSP_LASER_PERIOD-1} \f] */
+/** Laser pulse width. The duty cycle is D = BSP_LASER_PULSE_WIDTH / (BSP_LASER_PERIOD-1) */
 #define BSP_LASER_PULSE_WIDTH		3
 
 
