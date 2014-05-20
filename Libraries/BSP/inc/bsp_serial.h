@@ -1,14 +1,14 @@
 /**
- * \file        bsp_serial.h
- * \brief       Board support package for the user communication over UART.
- * \date        2014-05-03
- * \version     0.2
+ * \file		bsp_serial.h
+ * \brief		Board support package for the user communication over UART.
+ * \date		2014-05-03
+ * \version		0.2
  * \author		Kevin Gerber
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * @{
  *
- * \addtogroup  bsp_serial
+ * \addtogroup	bsp_serial
  * \brief		The BSP_SERIAL module provides a function to initialize the UART
  * 				port for the user communication. The UART will be configured in
  * 				interrupt mode.

@@ -1,16 +1,16 @@
 /**
- * \file        bsp_serial.c
- * \brief       Board support package for the user communication over UART.
- * \date        2014-05-03
- * \version     0.2
+ * \file		bsp_serial.c
+ * \brief		Board support package for the user communication over UART.
+ * \date		2014-05-03
+ * \version		0.2
  * \author		Kevin Gerber
  *
  * \note		Read and write pointer overflow tested.
  *
- * \addtogroup  bsp
+ * \addtogroup	bsp
  * @{
  *
- * \addtogroup  bsp_serial
+ * \addtogroup	bsp_serial
  * @{
  */
 
@@ -52,10 +52,10 @@ void bsp_SerialTxIrqDisable(void);
 
 
 /*
-* -----------------------------------------------------------------------
-* Private variables
-* -----------------------------------------------------------------------
-*/
+ * -----------------------------------------------------------------------
+ * Private variables
+ * -----------------------------------------------------------------------
+ */
 
 /**
  * \brief	Circular buffer manager.
@@ -64,10 +64,10 @@ static circbuff_t g_CircularBuffer;
 
 
 /*
-* -----------------------------------------------------------------------
-* Interrupt functions
-* -----------------------------------------------------------------------
-*/
+ * -----------------------------------------------------------------------
+ * Interrupt functions
+ * -----------------------------------------------------------------------
+ */
 
 /**
  * \brief	This function handles USARTx global interrupt request.
