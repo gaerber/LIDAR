@@ -61,6 +61,7 @@ extern void bsp_LedInit(void);
 extern void bsp_LedSetOn(bsp_led_t led);
 extern void bsp_LedSetOff(bsp_led_t led);
 extern void bsp_LedSetToggle(bsp_led_t led);
+extern uint8_t bsp_LedRead(bsp_led_t led);
 
 #endif /* BSP_LED_H_ */
 
