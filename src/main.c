@@ -4,11 +4,11 @@
  *
  * \mainpage	LIDAR
  * \author		Kevin Gerber
- * \date		2014-05-05
+ * \date		2014-05-23
  * \version		0.1
  *
  * \note		This is a developer preview.
- * \warning		Tests the SPI interface!
+ * \warning		Demo application for the quadrature encoder. Tested with 2000 pulses per turn and capture every 1.8 degree.
  *
  * \section Introduction
  * \section Architecture
@@ -43,8 +43,8 @@ void delay(void) {
 char msg[] = "Hallo Welt! Der Text wie immer bei diesen Programmierern :) \r\n";
 
 /** Button T0 */
-static const bsp_gpioconf_t BSP_CARME_T0 = {
-		RCC_AHB1Periph_GPIOC, GPIOC, GPIO_Pin_7, GPIO_Mode_IN, GPIO_PuPd_NOPULL
+static const bsp_gpioconf_t BSP_BUTTON_USER = {
+		RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_0, GPIO_Mode_IN, GPIO_PuPd_NOPULL
 };
 
 double g_CalResonatorFactor = 0.0;
@@ -75,6 +75,22 @@ void tdcIntCallback(void) {
 }
 
 /**
+ * \brief	Azimuth callback function.
+ * \param[in] azimuth is the current azimuth.
+ */
+void QuadencCallback(uint32_t azimuth) {
+	bsp_QuadencSetCapture((azimuth + 10) % BSP_QUADENC_INC_PER_TURN);
+	bsp_LedSetToggle(BSP_LED_RED);
+}
+
+/**
+ * \brief	Quadrature encoder error hook, called if increments were loosing.
+ */
+void bsp_QuadencRoterrorHook(void) {
+	bsp_LedSetOn(BSP_LED_ORANGE);
+}
+
+/**
  * \brief	Main function. Will be called after the startup sequence.
  * 			The main function initialize the real time operating system and starts it.
  * \return	This function should never finished.
@@ -85,15 +101,21 @@ int main(void) {
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-	bsp_GpioInit(&BSP_CARME_T0);
+	/* User button */
+	bsp_GpioInit(&BSP_BUTTON_USER);
 
-	bsp_SerialInit();
-	bsp_SerialStringPut(msg, strlen(msg));
+	/* LEDs */
 	bsp_LedInit();
-	bsp_GP22Init();
-	bsp_GP22IntCallback(tdcIntCallback);
 
+//	bsp_SerialInit();
+//	bsp_SerialStringPut(msg, strlen(msg));
+//	bsp_LedInit();
+//	bsp_GP22Init();
+//	bsp_GP22IntCallback(tdcIntCallback);
+//
 	bsp_QuadencInit();
+	bsp_QuadencPosCallback(QuadencCallback);
+	bsp_QuadencSetCapture(100);
 
 	/* Enable IRQ */
 	__enable_irq();
@@ -101,13 +123,27 @@ int main(void) {
 //	delay();
 //	bsp_GP22ReadState(&dummy);
 
-	/* Calibrate the high speed oscillator */
-	bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
-	delay();
+//	/* Calibrate the high speed oscillator */
+//	bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
+//	delay();
+//
+//	/* Start TDC measurement */
+//	bsp_GP22SendOpcode(GP22_OP_Init);
 
-	/* Start TDC measurement */
-	bsp_GP22SendOpcode(GP22_OP_Init);
+	/* Infinite loop */
+	while (1) {
+		bsp_QuadencGet(&dummy);
+		if (dummy != 0) {
+			bsp_LedSetOn(BSP_LED_GREEN);
+		}
+		else {
+			bsp_LedSetOff(BSP_LED_GREEN);
+		}
+		bsp_LedSetToggle(BSP_LED_BLUE);
+		delay();
+	}
 
+#if 0
 	/* Infinite loop */
 	while (1) {
 
@@ -148,6 +184,7 @@ int main(void) {
 
 		delay();
 	}
+#endif
 
 	return 0;
 }
