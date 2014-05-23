@@ -32,11 +32,10 @@
  * \warning		All LEDs require an entry in the BSP_LED_PORTS array with the correct hardware labels.
  */
 typedef enum {
-	BSP_LED_GREEN = 0,		/*!< The green LED identification number. */
-	//BSP_LED_OUT_0,			/*!< Carme IO2 OUT0 LED */
-	BSP_LED_OUT_1,			/*!< Carme IO2 OUT1 LED */
-	BSP_LED_OUT_2,			/*!< Carme IO2 OUT2 LED */
-	BSP_LED_OUT_3,			/*!< Carme IO2 OUT3 LED */
+	BSP_LED_GREEN = 0,		/*!< The green LED on the discovery board. */
+	BSP_LED_ORANGE,			/*!< The orange LED on the discovery board. */
+	BSP_LED_RED,			/*!< The red LED on the discovery board. */
+	BSP_LED_BLUE,			/*!< The blue LED on the discovery board. */
 	BSP_LED_ELEMENTCTR		/*!< Counts the LEDs. It must be the last element. Do not use as LED! */
 } bsp_led_t;
 
@@ -44,11 +43,10 @@ typedef enum {
  * \brief	Array off all used LED with their correct hardware label.
  */
 static const bsp_gpioconf_t BSP_LED_PORTS[] = {
-	{RCC_AHB1Periph_GPIOI, GPIOI, GPIO_Pin_6, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_GREEN */
-	//{RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_0, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_0 */
-	{RCC_AHB1Periph_GPIOH, GPIOH, GPIO_Pin_11, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_1 */
-	{RCC_AHB1Periph_GPIOH, GPIOH, GPIO_Pin_12, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_OUT_2 */
-	{RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_8, GPIO_Mode_OUT, GPIO_PuPd_NOPULL}	/* BSP_LED_OUT_3 */
+	{RCC_AHB1Periph_GPIOD, GPIOD, GPIO_Pin_12, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_GREEN */
+	{RCC_AHB1Periph_GPIOD, GPIOD, GPIO_Pin_13, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_ORANGE */
+	{RCC_AHB1Periph_GPIOD, GPIOD, GPIO_Pin_14, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_RED */
+	{RCC_AHB1Periph_GPIOD, GPIOD, GPIO_Pin_15, GPIO_Mode_OUT, GPIO_PuPd_NOPULL},	/* BSP_LED_BLUE */
 };
 
 
