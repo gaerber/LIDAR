@@ -1,8 +1,8 @@
 /**
  * \file		bsp_laser.h
  * \brief		Supports the laser pulse generator.
- * \date		2014-05-20
- * \version		0.1
+ * \date		2014-05-26
+ * \version		0.2
  * \author		Kevin Gerber
  *
  * \addtogroup	bsp
