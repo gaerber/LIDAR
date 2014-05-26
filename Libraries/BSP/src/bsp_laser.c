@@ -26,34 +26,19 @@ void bsp_LaserDisable(void);
 
 /*
  * ----------------------------------------------------------------------------
- * Private variables
- * ----------------------------------------------------------------------------
- */
-
-/**
- * \brief	Counter of the remaining laser pulses.
- */
-static uint32_t g_laserPulseCtr = 0;
-
-
-/*
- * ----------------------------------------------------------------------------
  * Interrupt functions
  * ----------------------------------------------------------------------------
  */
 
 /**
- * \brief	Timer interrupt handler. It is triggered by the capture compare register.
+ * \brief	Timer interrupt handler. It is triggered by the timer update flag.
+ * 			This is set after the repetition of all pulses.
  */
 void BSP_LASER_IRQ_Handler(void) {
 	if (TIM_GetITStatus(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_IRQ_SOURCE) != RESET) {
 		TIM_ClearITPendingBit(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_IRQ_SOURCE);
-		/* One pulse generated */
-		g_laserPulseCtr--;
-		if (g_laserPulseCtr == 0) {
-			/* All laser pulse were made */
-			bsp_LaserDisable();
-		}
+		/* All pulse were generated -> disable the generator */
+		bsp_LaserDisable();
 	}
 }
 
@@ -74,11 +59,14 @@ void bsp_LaserInit(void) {
 
 	uint16_t PrescalerValue;
 
-	/* Initialize all GPIOs in their function */
+	/* Initialize the overcurrent detection input */
+	bsp_GpioInit(&BSP_LASER_NER_PORT);
+
+	/* Initialize the laser output in his function */
 	bsp_GpioInit(&BSP_LASER_PORT);
 
 	/* TIM clock enable */
-	RCC_APB1PeriphClockCmd(BSP_LASER_TIMER_PORT_PERIPH, ENABLE);
+	RCC_APB2PeriphClockCmd(BSP_LASER_TIMER_PORT_PERIPH, ENABLE);
 
 	/* Compute the prescaler value */
 	PrescalerValue = (uint16_t) ((SystemCoreClock /2) / BSP_LASER_FREQ) - 1;
@@ -87,47 +75,42 @@ void bsp_LaserInit(void) {
 	TIM_TimeBaseStructure.TIM_Period = BSP_LASER_PERIOD;
 	TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(BSP_LASER_TIMER_PORT_BASE, &TIM_TimeBaseStructure);
 
 	/* PWM Mode configuration */
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 0;//BSP_LASER_PULSE_WIDTH;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_Pulse = BSP_LASER_PERIOD - BSP_LASER_PULSE_WIDTH;
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Reset;
 	/* Check the PWM port */
 	switch (BSP_LASER_TIMER_PORT_CHANEL) {
-	case CHANEL1:
-		/* PWM Mode configuration: Channel1 */
+	case CHANNEL1:
+		/* PWM Mode configuration: Channel 1 */
 		TIM_OC1Init(BSP_LASER_TIMER_PORT_BASE, &TIM_OCInitStructure);
-		TIM_OC1PreloadConfig(BSP_LASER_TIMER_PORT_BASE, TIM_OCPreload_Enable);
 		break;
 
-	case CHANEL2:
-		/* PWM Mode configuration: Channel2 */
+	case CHANNEL2:
+		/* PWM Mode configuration: Channel 2 */
 		TIM_OC2Init(BSP_LASER_TIMER_PORT_BASE, &TIM_OCInitStructure);
-		TIM_OC2PreloadConfig(BSP_LASER_TIMER_PORT_BASE, TIM_OCPreload_Enable);
 		break;
 
-	case CHANEL3:
-		/* PWM Mode configuration: Channel3 */
+	case CHANNEL3:
+		/* PWM Mode configuration: Channel 3 */
 		TIM_OC3Init(BSP_LASER_TIMER_PORT_BASE, &TIM_OCInitStructure);
-		TIM_OC3PreloadConfig(BSP_LASER_TIMER_PORT_BASE, TIM_OCPreload_Enable);
 		break;
 
-	case CHANEL4:
-		/* PWM Mode configuration: Channel4 */
+	case CHANNEL4:
+		/* PWM Mode configuration: Channel 4 */
 		TIM_OC4Init(BSP_LASER_TIMER_PORT_BASE, &TIM_OCInitStructure);
-		TIM_OC4PreloadConfig(BSP_LASER_TIMER_PORT_BASE, TIM_OCPreload_Enable);
 		break;
 
 	default:
 		assert(BSP_LASER_TIMER_PORT_CHANEL);
 		break;
 	}
-
-	/* Enables  TIMx peripheral preload register on ARR */
-	TIM_ARRPreloadConfig(BSP_LASER_TIMER_PORT_BASE, ENABLE);
 
 	/* Enable timer interrupt on capture compare */
 	TIM_ITConfig(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_IRQ_SOURCE, ENABLE);
@@ -137,36 +120,57 @@ void bsp_LaserInit(void) {
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
+}
+
+/**
+ * \brief	Generates a number of pulses in the configured repetition frequency and pulse width.
+ * \note	Direct access to the CMSIS, due to performance.
+ * \param[in] nr_of_pulses is the number of pulse repetition.
+ */
+void bsp_LaserPulse(uint32_t nr_of_pulses) {
+	/* parameter check */
+	assert(nr_of_pulses);
+
+	/* Sets the repetition counter */
+	BSP_LASER_TIMER_PORT_BASE->RCR = 2 * nr_of_pulses - 1;
+	/* Generate an update event to reload the repetition counter (only for TIM1 and TIM8) value immediately */
+	BSP_LASER_TIMER_PORT_BASE->EGR = TIM_PSCReloadMode_Immediate;
+
+	/* Starts the laser pulses */
+	bsp_LaserEnable();
+}
+
+/**
+ * \brief	Enable the laser pulse generator and send a sequence.
+ */
+void bsp_LaserEnable(void) {
+	/* Starts a new pulse */
+	TIM_SetCounter(BSP_LASER_TIMER_PORT_BASE, 0);
+
+	/* Main output enable */
+	TIM_CtrlPWMOutputs(BSP_LASER_TIMER_PORT_BASE, ENABLE);
 
 	/* Enable the timer */
 	TIM_Cmd(BSP_LASER_TIMER_PORT_BASE, ENABLE);
 }
 
 /**
- * \brief	Generates a number of pulses in the configured repetition frequency and pulse width.
- * \param[in] nr_of_pulses is the number of pulse repetition.
- */
-void bsp_LaserPulse(uint32_t nr_of_pulses) {
-	g_laserPulseCtr = nr_of_pulses;
-	bsp_LaserEnable();
-}
-
-/**
- * \brief	Enable the engine. It will turn with the configured speed.
- */
-void bsp_LaserEnable(void) {
-	/* Starts a new pulse */
-	TIM_SetCounter(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_PERIOD-20);
-	/* Sets pulse width */
-	TIM_SetCompare1(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_PULSE_WIDTH);
-}
-
-/**
- * \brief	Disable the engine. It will be stopped.
+ * \brief	Disable the laser pulse generator. Output has to be in low state.
  */
 void bsp_LaserDisable(void) {
-	/* Set output to low */
-	TIM_SetCompare1(BSP_LASER_TIMER_PORT_BASE, 0);
+	/* Disable the timer */
+	TIM_Cmd(BSP_LASER_TIMER_PORT_BASE, DISABLE);
+
+	/* Disable the output to be sure it is low */
+	TIM_CtrlPWMOutputs(BSP_LASER_TIMER_PORT_BASE, DISABLE);
+}
+
+/**
+ * \brief	Read the overcurrent detection input.
+ * \return	FALSE if an overcurrent is detected.
+ */
+uint8_t bsp_LaserOvercurrent(void) {
+	return GPIO_ReadInputDataBit(BSP_LASER_NER_PORT.base, BSP_LASER_NER_PORT.pin);
 }
 
 
