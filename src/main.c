@@ -8,7 +8,7 @@
  * \version		0.1
  *
  * \note		This is a developer preview.
- * \warning		Tests the LED interface!
+ * \warning		Tests the laser pulse generator!
  *
  * \section Introduction
  * \section Architecture
@@ -42,6 +42,8 @@ char msg[] = "Hallo Welt! Der Text wie immer bei diesen Programmierern :) \r\n";
  * \return	This function should never finished.
  */
 int main(void) {
+	uint32_t ctr=1;
+
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
@@ -50,9 +52,11 @@ int main(void) {
 	/* Enable IRQ */
 	__enable_irq();
 
+	delay();
+
 	/* Infinite loop */
 	while (1) {
-		bsp_LaserPulse(10);
+		bsp_LaserPulse(ctr++);
 		delay();
 	}
 
