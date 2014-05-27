@@ -33,7 +33,7 @@
 /** PWM frequency of the laser pulse generator. */
 #define BSP_ENGINE_PWM_FREQ			84000000
 /** Period register of the PWM. The frequency of the laser pulse replay is f = BSP_ENGINE_PWM_FREQ[Hz] / (BSP_ENGINE_PWM_PERIOD-1)  */
-#define BSP_ENGINE_PWM_PERIOD		2689//8401
+#define BSP_ENGINE_PWM_PERIOD		8401
 
 
 /*

@@ -33,7 +33,7 @@
 /** PWM frequency of the laser pulse generator. */
 #define BSP_LASER_FREQ				84000000
 /** Period register of the PWM. The frequency of the laser pulse replay is f = 1/2 * BSP_LASER_FREQ[Hz] / (BSP_LASER_PERIOD-1)  */
-#define BSP_LASER_PERIOD			526
+#define BSP_LASER_PERIOD			841
 /** Laser pulse width. The duty cycle is D = BSP_LASER_PULSE_WIDTH / (BSP_LASER_PERIOD-1) */
 #define BSP_LASER_PULSE_WIDTH		1
 
