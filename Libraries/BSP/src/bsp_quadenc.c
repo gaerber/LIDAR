@@ -137,22 +137,22 @@ void bsp_QuadencInit(void) {
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	/* Check the caption compare channel */
 	switch (BSP_QUADENC_POS_CHANEL) {
-	case CHANEL1:
+	case CHANNEL1:
 		/* PWM Mode configuration: Channel1 */
 		TIM_OC1Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
 		break;
 
-	case CHANEL2:
+	case CHANNEL2:
 		/* PWM Mode configuration: Channel2 */
 		TIM_OC2Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
 		break;
 
-	case CHANEL3:
+	case CHANNEL3:
 		/* PWM Mode configuration: Channel3 */
 		TIM_OC3Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
 		break;
 
-	case CHANEL4:
+	case CHANNEL4:
 		/* PWM Mode configuration: Channel4 */
 		TIM_OC4Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
 		break;
@@ -223,22 +223,22 @@ uint8_t bsp_QuadencGet(uint32_t *azimuth) {
 void bsp_QuadencSetCapture(uint32_t azimuth) {
 	/* Check the caption compare channel */
 	switch (BSP_QUADENC_POS_CHANEL) {
-	case CHANEL1:
+	case CHANNEL1:
 		/* Set caption compare register: Channel 1 */
 		TIM_SetCompare1(BSP_QUADENC_TIMER, azimuth);
 		break;
 
-	case CHANEL2:
+	case CHANNEL2:
 		/* Set caption compare register: Channel 2 */
 		TIM_SetCompare2(BSP_QUADENC_TIMER, azimuth);
 		break;
 
-	case CHANEL3:
+	case CHANNEL3:
 		/* Set caption compare register: Channel 3 */
 		TIM_SetCompare3(BSP_QUADENC_TIMER, azimuth);
 		break;
 
-	case CHANEL4:
+	case CHANNEL4:
 		/* Set caption compare register: Channel 4 */
 		TIM_SetCompare4(BSP_QUADENC_TIMER, azimuth);
 		break;
