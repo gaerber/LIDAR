@@ -4,11 +4,11 @@
  *
  * \mainpage	LIDAR
  * \author		Kevin Gerber
- * \date		2014-05-23
+ * \date		2014-05-05
  * \version		0.1
  *
  * \note		This is a developer preview.
- * \warning		Demo application for the quadrature encoder. Tested with 2000 pulses per turn and capture every 1.8 degree.
+ * \warning		Tests the laser pulse generator!
  *
  * \section Introduction
  * \section Architecture
@@ -20,11 +20,7 @@
 #include <string.h>
 
 #include "stm32f4xx.h"
-#include "bsp.h"
-#include "bsp_led.h"
-#include "bsp_gp22.h"
-#include "bsp_serial.h"
-#include "bsp_quadenc.h"
+#include "bsp_laser.h"
 
 extern int siprintf(char *buf, const char *fmt, ...);
 
@@ -34,7 +30,7 @@ extern int siprintf(char *buf, const char *fmt, ...);
 void delay(void) {
 	volatile uint32_t ctr;
 
-	for (ctr=0; ctr<0x3FFFF; ctr++) {
+	for (ctr=0; ctr<0x3FFFFF; ctr++) {
 
 	}
 }
@@ -96,7 +92,7 @@ void bsp_QuadencRoterrorHook(void) {
  * \return	This function should never finished.
  */
 int main(void) {
-	uint32_t dummy;
+	uint32_t ctr=1;
 
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
@@ -111,7 +107,7 @@ int main(void) {
 //	bsp_SerialStringPut(msg, strlen(msg));
 //	bsp_LedInit();
 //	bsp_GP22Init();
-//	bsp_GP22IntCallback(tdcIntCallback);
+	bsp_LaserInit();
 //
 	bsp_QuadencInit();
 	bsp_QuadencPosCallback(QuadencCallback);
@@ -120,68 +116,11 @@ int main(void) {
 	/* Enable IRQ */
 	__enable_irq();
 
-//	delay();
-//	bsp_GP22ReadState(&dummy);
-
-//	/* Calibrate the high speed oscillator */
-//	bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
-//	delay();
-//
-//	/* Start TDC measurement */
-//	bsp_GP22SendOpcode(GP22_OP_Init);
+	delay();
 
 	/* Infinite loop */
 	while (1) {
-		bsp_QuadencGet(&dummy);
-		if (dummy != 0) {
-			bsp_LedSetOn(BSP_LED_GREEN);
-		}
-		else {
-			bsp_LedSetOff(BSP_LED_GREEN);
-		}
-		bsp_LedSetToggle(BSP_LED_BLUE);
-		delay();
-	}
-
-#if 0
-	/* Infinite loop */
-	while (1) {
-
-		/* Calibrate high speed clock */
-		//bsp_GP22Opcode(OP_Start_Cal_Resonator);
-		/* Wait for INT */
-		/* Read RD_RES_0 */
-		/* Correction factor = 61.035 / RES_O */
-
-		/* Calibrate TDC */
-		//bsp_GP22Opcode(OP_Start_Cal_TDC);
-
-		/* Start TDC measurement */
-		//bsp_GP22Opcode(OP_Init);
-
-		dummy = bsp_QuadencGet();
-
-		while (!GPIO_ReadInputDataBit(BSP_CARME_T0.base, BSP_CARME_T0.pin)) {
-			// Wait until T0 is pressed
-		}
-
-		/* Start TDC measurement */
-		bsp_GP22SendOpcode(GP22_OP_Init);
-
-		/* Simulate the hardware */
-		bsp_LedSetOn(BSP_LED_OUT_1);
-		bsp_LedSetOn(BSP_LED_OUT_2);
-		bsp_LedSetOn(BSP_LED_OUT_3);
-		bsp_LedSetOff(BSP_LED_OUT_1);
-		bsp_LedSetOff(BSP_LED_OUT_2);
-		bsp_LedSetOff(BSP_LED_OUT_3);
-
-		delay();
-
-		while (GPIO_ReadInputDataBit(BSP_CARME_T0.base, BSP_CARME_T0.pin)) {
-			// Wait until T0 is released
-		}
-
+		bsp_LaserPulse(ctr++);
 		delay();
 	}
 #endif

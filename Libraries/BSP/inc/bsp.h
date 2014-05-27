@@ -45,10 +45,10 @@ typedef struct {
  * \brief	All available PWM controller and channel.
  */
 typedef enum {
-	CHANEL1,		/*!< PWM Channel 1 */
-	CHANEL2,		/*!< PWM Channel 2 */
-	CHANEL3,		/*!< PWM Channel 3 */
-	CHANEL4			/*!< PWM Channel 4 */
+	CHANNEL1,		/*!< PWM Channel 1 */
+	CHANNEL2,		/*!< PWM Channel 2 */
+	CHANNEL3,		/*!< PWM Channel 3 */
+	CHANNEL4		/*!< PWM Channel 4 */
 } bsp_pwmport_t;
 
 
