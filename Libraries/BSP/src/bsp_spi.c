@@ -1,5 +1,5 @@
 /**
- * \file		bsp_spi.h
+ * \file		bsp_spi.c
  * \brief		Supports all SPI for the communication.
  * \date		2014-05-12
  * \version		0.3
