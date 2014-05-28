@@ -1,5 +1,5 @@
 /**
- * \file		bsp_engine.h
+ * \file		bsp_engine.c
  * \brief		Supports the full-bridge DC engine driver.
  * \date		2014-05-26
  * \version		0.1

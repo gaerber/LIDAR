@@ -1,5 +1,5 @@
 /**
- * \file		bsp_gp22.h
+ * \file		bsp_gp22.c
  * \brief		Supports all functions to manage the TDC GP22.
  * \date		2014-05-12
  * \version		0.1

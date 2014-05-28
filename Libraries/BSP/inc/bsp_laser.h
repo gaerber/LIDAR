@@ -13,7 +13,7 @@
  * 				generator. The output is switched as PWM and the center aligned
  * 				counter mode is set. In this case the pulse is in the middle of
  * 				a period and a sequence stop in high state in not possible.
- * \important	Only TIM1 and TIM8 are allowed in this module, due to the
+ * \warning		Only TIM1 and TIM8 are allowed in this module, due to the
  * 				necessary repetition counter register.
  * @{
  */
