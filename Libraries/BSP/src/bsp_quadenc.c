@@ -67,14 +67,14 @@ void BSP_QUADENC_POS_IRQ_Handler(void) {
  * \brief	Index interrupt handler. The position must be set back to zero.
  */
 void BSP_QUADENC_I_IRQ_Handler(void) {
-	uint32_t incs;
-
 	/* Rising edge interrupt of the index */
 	if(EXTI_GetITStatus(BSP_QUADENC_INCI.pin) != RESET) {
 		/* Clear the interrupt flag */
 		EXTI_ClearITPendingBit(BSP_QUADENC_INCI.pin);
 
 #if BSP_QUADENC_ROTERROR_HOOK
+		uint32_t incs;
+
 		/* Check rotation increments */
 		if (bsp_QuadencGet(&incs) && incs != 0) {
 			/* Rotation error detected */

@@ -43,7 +43,7 @@ typedef void (*bsp_quadenccallback_t)(uint32_t azimuth);
  * ----------------------------------------------------------------------------
  */
 #define BSP_QUADENC_INC_PER_TURN	(2000-1)	/*!< Number of increments each turn. */
-#define BSP_QUADENC_ROTERROR_HOOK	1			/*!< Enable or disable the rotation hook function bsp_QuadencRoterrorHook() */
+#define BSP_QUADENC_ROTERROR_HOOK	0			/*!< Enable or disable the rotation hook function bsp_QuadencRoterrorHook() */
 
 
 /*
