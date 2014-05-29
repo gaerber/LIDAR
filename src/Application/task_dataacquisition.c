@@ -71,7 +71,7 @@ void taskDataAcquisition(void* pvParameters) {
 
 	/* Loop forever */
 	for (;;) {
-
+		vTaskDelay(100);
 	}
 
 	/* Never reach this point */

@@ -21,6 +21,10 @@
 
 /* Application */
 #include "task_controller.h"
+#include "data_acquisition.h"
+
+/* BSP */
+#include "bsp_led.h"
 
 
 /*
@@ -60,7 +64,10 @@ QueueHandle_t queueCommand;
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
+	bsp_LedInit();
 
+	/* Initialize the data acquisition */
+	DataAcquisitionInit();
 
 	/* Generate the task */
 	xTaskCreate(taskController, TASK_CONTROLLER_NAME, TASK_CONTROLLER_STACKSIZE,
@@ -74,10 +81,31 @@ void taskControllerInit(void) {
  * \brief	Controller Task. Implementation of the controller task with his own loop.
  */
 void taskController(void* pvParameters) {
+	command_t command;
+	/* Timeout synchronization */
+
+	//DEMO
+	command.command = Init;
+	xQueueSend(queueCommand, &command, portMAX_DELAY);
+	command.command = Start;
+	xQueueSend(queueCommand, &command, portMAX_DELAY);
 
 	/* Loop forever */
 	for (;;) {
+		/* Wait for an event */
+		if (xQueueReceive(queueCommand, &command, 100) == pdTRUE) {
+			switch (command.command) {
+			/* Initialization */
+			case Init:
 
+				break;
+
+			/* Starts the data acquisition */
+			case Start:
+				DataAcquisitionStart(500,1500,100,5);
+				break;
+			}
+		}
 	}
 
 	/* Never reach this point */

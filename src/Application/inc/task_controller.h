@@ -48,8 +48,8 @@
  */
 typedef struct {
 	enum {
-		C1,
-		C2
+		Init,
+		Start
 	} command;
 
 	union {

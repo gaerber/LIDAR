@@ -35,6 +35,12 @@
 #include "semphr.h"
 #include "timers.h"
 
+/* Application */
+#include "task_comminterp.h"
+#include "task_controller.h"
+#include "task_gatekeeper.h"
+#include "task_scanner.h"
+
 /**
  * \brief	A blocked time delay.
  */
@@ -59,11 +65,17 @@ void delay(void) {
  * \return	This function should never finished.
  */
 int main(void) {
-
-
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
+	/* Initialize all tasks */
+	taskCommInterpInit();
+	taskControllerInit();
+	taskGatekeeperInit();
+	taskScannerInit();
+
+	/* Start the scheduler */
+	vTaskStartScheduler();
 
 	/* Never reach this point */
 	return 0;
