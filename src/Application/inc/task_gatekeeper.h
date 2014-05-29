@@ -1,7 +1,7 @@
 /**
  * \file		task_gatekeeper.h
  * \brief		Sends all messages over the serial interface to the user.
- * \date		2014-05-28
+ * \date		2014-05-29
  * \version		0.1
  * \author		Kevin Gerber
  *
@@ -33,7 +33,7 @@
  * ----------------------------------------------------------------------------
  */
 #define Q_MESSAGE_LENGTH			10		/*!< Queue length of the messages. */
-#define MESSAGE_STRING_LENGTH		16		/*!< Maximal length of each message. */
+#define MESSAGE_STRING_LENGTH		24		/*!< Maximal length of each message. */
 
 
 /*
@@ -51,6 +51,8 @@
 				((mt) == MSG_TYPE_CONF) || ((mt) == MSG_TYPE_STATE) \
 				((mt) == MSG_TYPE_DATA))
 
+#define MSG_FRAME_END			"\r\n"	/*!< End of a message frame */
+
 /*
  * ----------------------------------------------------------------------------
  * Type declarations
@@ -61,7 +63,7 @@
  * \brief	Data type of a message. One message will be placed in one frame.
  */
 typedef struct {
-	char selector;						/*!< Message type. */
+	char type;							/*!< Message type. */
 	char msg[MESSAGE_STRING_LENGTH];	/*!< Message, without the frame. */
 } message_t;
 
@@ -73,6 +75,7 @@ typedef struct {
  */
 extern TaskHandle_t taskGatekeeperHandle;
 extern QueueHandle_t queueMessage;
+extern SemaphoreHandle_t mutexTxCircBuf;
 
 
 /*
