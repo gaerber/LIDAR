@@ -64,7 +64,7 @@ QueueHandle_t queueCommand;
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-	bsp_LedInit();
+	//bsp_LedInit();
 
 	/* Initialize the data acquisition */
 	DataAcquisitionInit();

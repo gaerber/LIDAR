@@ -70,7 +70,7 @@ SemaphoreHandle_t mutexTxCircBuf;
 void taskGatekeeperInit(void) {
 
 	/* Initialize the serial interface */
-	bsp_SerialInit();
+	//bsp_SerialInit();
 
 	/* Generate the task */
 	xTaskCreate(taskGatekeeper, TASK_GATEKEEPER_NAME, TASK_GATEKEEPER_STACKSIZE,
