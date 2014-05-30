@@ -38,10 +38,10 @@ typedef void (*bsp_gp22callback_t)(void);
  * TDC configurations
  * ----------------------------------------------------------------------------
  */
-#define BSP_GP22_REG0		0x00042055		/*!< TDC-GP22 register 0 configuration */
-#define BSP_GP22_REG1		0x194900AA		/*!< TDC-GP22 register 1 configuration */
+#define BSP_GP22_REG0		0x00C42055		/*!< TDC-GP22 register 0 configuration */
+#define BSP_GP22_REG1		0x19C900AA		/*!< TDC-GP22 register 1 configuration */
 #define BSP_GP22_REG2		0xA0000000		/*!< TDC-GP22 register 2 configuration */
-#define BSP_GP22_REG3		0x000000FF		/*!< TDC-GP22 register 3 configuration */
+#define BSP_GP22_REG3		0x200000FF		/*!< TDC-GP22 register 3 configuration */ /* EN_ERR_VAL FUNKTIONIERT NICHT WIE ERWARTET */
 #define BSP_GP22_REG4		0x20000000		/*!< TDC-GP22 register 4 configuration */
 #define BSP_GP22_REG5		0x50000000		/*!< TDC-GP22 register 5 configuration */
 #define BSP_GP22_REG6		0x00000000		/*!< TDC-GP22 register 6 configuration */
