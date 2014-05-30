@@ -136,7 +136,7 @@ void DataAcquisitionStop(void) {
  * \param[in]	azimuth is the current azimuth, which called the interrupt.
  */
 void azimuthTDCCalibrationHandler(uint32_t azimuth) {
-	uint32_t reg0;
+	uint32_t reg;
 
 	/* Check if it is enabled */
 	if (g_settings.enable) {
@@ -145,11 +145,16 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
 		bsp_QuadencSetCapture(1);
 
 		/* Disable the automatic calibration calculation on the TDC */
-		reg0 = BSP_GP22_REG0 & (~(1<<13));
-		bsp_GP22RegWrite(GP22_WR_REG_0, reg0);
+		reg = BSP_GP22_REG0 & (~(1<<13));
+		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
+
+		/* Disable the fast init feature */
+		reg = BSP_GP22_REG1 & (~(1<<23));
+		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
 
 		/* Starts a calibration measurement for the high speed clock */
 		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
+		bsp_GP22SendOpcode(GP22_OP_Init);
 		bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
 	}
 	else {
@@ -166,7 +171,8 @@ void tdcHighSpeedCalibrationHandler(void) {
 	uint32_t result;
 
 	/* Read the state register */
-	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+	result=0;
 
 	/* Check the state */
 	if (result == 0x00) {
@@ -179,6 +185,7 @@ void tdcHighSpeedCalibrationHandler(void) {
 
 	/* Reset the configuration */
 	bsp_GP22RegWrite(GP22_WR_REG_0, BSP_GP22_REG0);
+	bsp_GP22RegWrite(GP22_WR_REG_1, BSP_GP22_REG1);
 }
 
 
@@ -202,6 +209,9 @@ void azimuthPDCalibrationHandler(uint32_t azimuth) {
 		/* Set the TDC callback function */
 		bsp_GP22IntCallback(tdcPropagationDelayCalibrationHandler);
 
+		/* Make the TDC ready */
+		bsp_GP22SendOpcode(GP22_OP_Init);
+
 		/* Starts a measurement */
 		bsp_LaserPulse(g_settings.laser_pulses);
 	}
@@ -218,7 +228,8 @@ void tdcPropagationDelayCalibrationHandler(void) {
 	uint32_t result;
 
 	/* Read the state register */
-	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+	result=0x48;
 
 	/* Check the state */
 	if (result == 0x48) {
@@ -277,7 +288,8 @@ void tdcMeasurementHandler(void) {
 	uint32_t result;
 
 	/* Read the state register */
-	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
+	result=0x48;
 
 	/* Check the state */
 	if (result == 0x48) {
