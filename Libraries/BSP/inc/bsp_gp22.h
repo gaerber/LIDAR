@@ -57,13 +57,13 @@ typedef void (*bsp_gp22callback_t)(void);
  * Interrupt pin from the GP22. Signals when measurement is finished.
  */
 static const bsp_gpioconf_t BSP_GP22_INT = {
-		RCC_AHB1Periph_GPIOG, GPIOG, GPIO_Pin_8, GPIO_Mode_IN, GPIO_PuPd_UP
+		RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_1, GPIO_Mode_IN, GPIO_PuPd_UP
 };
 
 /* Interrupt settings */
-#define BSP_GP22_IRQ_CHANEL		EXTI9_5_IRQn		/*!< NVIC GPIO interrupt */
+#define BSP_GP22_IRQ_CHANEL		EXTI1_IRQn			/*!< NVIC GPIO interrupt */
 #define BSP_GP22_IRQ_PRIORITY	8					/*!< NVIC GPIO interrupt priority */
-#define BSP_GP22_IRQ_Handler	EXTI9_5_IRQHandler	/*!< NVIC GPIO handler */
+#define BSP_GP22_IRQ_Handler	EXTI1_IRQHandler	/*!< NVIC GPIO handler */
 
 
 /*

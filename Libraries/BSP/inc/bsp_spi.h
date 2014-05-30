@@ -41,7 +41,7 @@ typedef enum {
  * \brief	Array off all used chip selects with their correct hardware label.
  */
 static const bsp_gpioconf_t BSP_SPI_CS[] = {
-	{RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_4, GPIO_Mode_OUT, GPIO_PuPd_UP},	/* BSP_SPI_CS_GP22 */
+	{RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_12, GPIO_Mode_OUT, GPIO_PuPd_UP},	/* BSP_SPI_CS_GP22 */
 };
 
 /**
@@ -49,15 +49,15 @@ static const bsp_gpioconf_t BSP_SPI_CS[] = {
  */
 static const bsp_gpioconf_t BSP_SPI_PORT_LABEL[] = {
 	/* SPI CLK */
-	{ RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_5, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI1 },
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_13, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 },
 	/* SPI MISO */
-	{ RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_6, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI1 },
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_14, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 },
 	/* SPI MOSI */
-	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_5, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI1 }
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_15, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 }
 };
 
-#define BSP_SPI_PORT		SPI1					/*!< Port base address of the SPI port */
-#define BSP_SPI_PERIPH		RCC_APB2Periph_SPI1		/*!< RCC AHB peripheral of the SPI port */
+#define BSP_SPI_PORT		SPI2					/*!< Port base address of the SPI port */
+#define BSP_SPI_PERIPH		RCC_APB1Periph_SPI2		/*!< RCC AHB peripheral of the SPI port */
 
 
 /*
