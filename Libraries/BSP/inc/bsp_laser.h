@@ -35,7 +35,7 @@
 /** Period register of the PWM. The frequency of the laser pulse replay is f = 1/2 * BSP_LASER_FREQ[Hz] / (BSP_LASER_PERIOD-1)  */
 #define BSP_LASER_PERIOD			841
 /** Laser pulse width. The duty cycle is D = BSP_LASER_PULSE_WIDTH / (BSP_LASER_PERIOD-1) */
-#define BSP_LASER_PULSE_WIDTH		1
+#define BSP_LASER_PULSE_WIDTH		20
 
 
 /*
@@ -64,7 +64,7 @@ static const bsp_gpioconf_t BSP_LASER_PORT = {
 /* Interrupt settings */
 #define BSP_LASER_IRQ_CHANEL		TIM8_UP_TIM13_IRQn	/*!< NVIC timer interrupt */
 #define BSP_LASER_IRQ_SOURCE		TIM_IT_Update		/*!< NVIC timer interrupt source */
-#define BSP_LASER_IRQ_PRIORITY		2					/*!< NVIC timer interrupt priority */
+#define BSP_LASER_IRQ_PRIORITY		0					/*!< NVIC timer interrupt priority */
 #define BSP_LASER_IRQ_Handler		TIM8_UP_TIM13_IRQHandler	/*!< NVIC timer handler */
 
 

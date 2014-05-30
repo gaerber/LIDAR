@@ -49,11 +49,11 @@ static const bsp_gpioconf_t BSP_SPI_CS[] = {
  */
 static const bsp_gpioconf_t BSP_SPI_PORT_LABEL[] = {
 	/* SPI CLK */
-	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_13, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 },
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_13, GPIO_Mode_AF, GPIO_PuPd_DOWN, GPIO_AF_SPI2 },
 	/* SPI MISO */
-	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_14, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 },
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_14, GPIO_Mode_AF, GPIO_PuPd_DOWN, GPIO_AF_SPI2 },
 	/* SPI MOSI */
-	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_15, GPIO_Mode_AF, GPIO_PuPd_NOPULL, GPIO_AF_SPI2 }
+	{ RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_15, GPIO_Mode_AF, GPIO_PuPd_DOWN, GPIO_AF_SPI2 }
 };
 
 #define BSP_SPI_PORT		SPI2					/*!< Port base address of the SPI port */
