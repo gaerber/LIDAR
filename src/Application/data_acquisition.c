@@ -18,9 +18,14 @@
 #include <stdint.h>
 
 /* RTOS */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "memPoolService.h"
 
 /* Application */
 #include "data_acquisition.h"
+#include "task_dataprocessing.h"
 
 /* BSP */
 #include "bsp_laser.h"
@@ -69,6 +74,18 @@ void tdcMeasurementHandler(void);
  */
 static dataaquisition_t g_settings;
 
+/**
+ * \brief	Pointer to the storage of the raw data. Get the space form a
+ * 			memory pool.
+ */
+rawdata_t *g_rawDataPtr;
+
+/**
+ * \brief	Calibration raw value. It is updated very turn.
+ */
+uint32_t g_rawCalibrationData;
+
+
 /*
  * ----------------------------------------------------------------------------
  * Implementation
@@ -94,6 +111,9 @@ void DataAcquisitionInit(void) {
 	g_settings.azimuth_res = DA_AZIMUTH_RES;
 	g_settings.laser_pulses = 25;
 	g_settings.enable = 0;
+
+	g_rawDataPtr = NULL;
+	g_rawCalibrationData = 0;
 }
 
 /**
@@ -114,7 +134,7 @@ void DataAcquisitionStart(uint32_t atzimuth_left, uint32_t azimuth_right,
 	/* Starts the data acquisition with a calibration measurement of the
 	 * high speed clock from the TDC */
 	bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
-	bsp_QuadencSetCapture(DA_AZIMUTH_MAX + 2 * DA_AZIMUTH_RES);
+	bsp_QuadencSetCapture(DA_AZIMUTH_CAL_RES);
 }
 
 /**
@@ -142,7 +162,7 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
 	if (g_settings.enable) {
 		/* Configure the next step: Propagation delay calibration */
 		bsp_QuadencPosCallback(azimuthPDCalibrationHandler);
-		bsp_QuadencSetCapture(1);
+		bsp_QuadencSetCapture(DA_AZIMUTH_CAL_DIST);
 
 #if (BSP_GP22_REG0 & (1<<13))
 		/* Disable the automatic calibration calculation on the TDC */
@@ -172,10 +192,8 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
  * 			measurement.
  */
 void tdcHighSpeedCalibrationHandler(void) {
-	uint32_t result;
-
 	/* Read the calibration value */
-	bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
+	bsp_GP22RegRead(GP22_RD_RES_0, &g_rawCalibrationData, 4);
 
 	/* Reset the configuration */
 #if (BSP_GP22_REG0 & (1<<13))
@@ -202,22 +220,39 @@ void tdcHighSpeedCalibrationHandler(void) {
  * \param[in]	azimuth is the current azimuth, which called the interrupt.
  */
 void azimuthPDCalibrationHandler(uint32_t azimuth) {
+	portBASE_TYPE xTaskWoken = pdFALSE;
+
 	/* Check if it is enabled */
 	if (g_settings.enable) {
 		/* Configure the next azimuth interrupt: First measurement point */
 		bsp_QuadencPosCallback(azimuthMeasurementHandler);
 		bsp_QuadencSetCapture(g_settings.azimuth_left);
 
-		/* Set the TDC callback function */
-		bsp_GP22IntCallback(tdcPropagationDelayCalibrationHandler);
+		/* Get a memory block for the raw data */
+		if (eMemTakeBlockFromISR(&memRawData, (void**)&g_rawDataPtr, &xTaskWoken) == MEM_NO_ERROR) {
+			/* Set the default values */
+			g_rawDataPtr->cal_resonator = g_rawCalibrationData;
+			g_rawDataPtr->increments = azimuth;
+			g_rawDataPtr->raw_ctr = 0;
 
-		/* Starts a measurement sequence */
-		bsp_LaserPulse(g_settings.laser_pulses);
+			/* Set the TDC callback function */
+			bsp_GP22IntCallback(tdcPropagationDelayCalibrationHandler);
+
+			/* Starts a measurement sequence */
+			bsp_LaserPulse(g_settings.laser_pulses);
+		}
+		else {
+			/* Send an error message to the controller */
+
+		}
 	}
 	else {
 		/* Data acquisition disable */
 		bsp_QuadencPosCallback(NULL);
 	}
+
+	/* Check if a higher prior task is woken up */
+    portEND_SWITCHING_ISR(xTaskWoken);
 }
 
 /**
@@ -233,6 +268,8 @@ void tdcPropagationDelayCalibrationHandler(void) {
 	if ((result & 0xF8) == 0x48) {
 		/* Read the calibration value */
 		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
+		/* Safe the raw data */
+		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
 	}
 	else {
 		/** @Todo: Error handling */
@@ -256,6 +293,7 @@ void tdcPropagationDelayCalibrationHandler(void) {
  */
 void azimuthMeasurementHandler(uint32_t azimuth) {
 	uint32_t next_azimuth;
+	portBASE_TYPE xTaskWoken = pdFALSE;
 
 	/* Check if it is enabled */
 	if (g_settings.enable) {
@@ -268,21 +306,34 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 		else {
 			/* Scan completed -> restart with calibration */
 			bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
-			bsp_QuadencSetCapture(DA_AZIMUTH_MAX + 2 * DA_AZIMUTH_RES);
+			bsp_QuadencSetCapture(DA_AZIMUTH_CAL_RES);
 		}
 
-		/* Get the memory pool */
+		/* Get a memory block for the raw data */
+		if (eMemTakeBlockFromISR(&memRawData, (void**)&g_rawDataPtr, &xTaskWoken) == MEM_NO_ERROR) {
+			/* Set the default values */
+			g_rawDataPtr->cal_resonator = g_rawCalibrationData;
+			g_rawDataPtr->increments = azimuth;
+			g_rawDataPtr->raw_ctr = 0;
 
-		/* Set the TDC callback function */
-		bsp_GP22IntCallback(tdcMeasurementHandler);
+			/* Set the TDC callback function */
+			bsp_GP22IntCallback(tdcMeasurementHandler);
 
-		/* Starts the measurement */
-		bsp_LaserPulse(g_settings.laser_pulses);
+			/* Starts the measurement */
+			bsp_LaserPulse(g_settings.laser_pulses);
+		}
+		else {
+			/* Send an error message to the controller */
+
+		}
 	}
 	else {
 		/* Data acquisition disable */
 		bsp_QuadencPosCallback(NULL);
 	}
+
+	/* Make the TDC ready for a measurement */
+	bsp_GP22SendOpcode(GP22_OP_Init);
 }
 
 /**
@@ -298,11 +349,14 @@ void tdcMeasurementHandler(void) {
 	if ((result & 0xF8) == 0x48) {
 		/* Read the calibration value */
 		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
+		/* Safe the raw data */
+		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
 	}
 	else {
 		/* Check if no reflection is detected */
 		if ((result & 0xF8) == 0x08) {
-
+			/* set the raw date to endless (maximum value) */
+			g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = 0x7FFFFFFF;
 		}
 		else {
 			/** @Todo: Error handling */

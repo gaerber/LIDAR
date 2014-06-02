@@ -31,6 +31,8 @@
 #define DA_AZIMUTH_MIN		330		/*!< Minimum azimuth [increments]. */
 #define DA_AZIMUTH_MAX		1660	/*!< Maximum azimuth [increments]. */
 #define DA_AZIMUTH_RES		10		/*!< Default azimuth steps [increments]. */
+#define DA_AZIMUTH_CAL_DIST	1		/*!< Azimuth at which the distance is calibrated. */
+#define DA_AZIMUTH_CAL_RES	(DA_AZIMUTH_MAX + 2 * DA_AZIMUTH_RES)	/*!< Azimuth at which the high speed clock is calibrated. */
 
 /*
  * ----------------------------------------------------------------------------
