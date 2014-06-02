@@ -48,16 +48,55 @@
  */
 typedef struct {
 	enum {
-		Init,
-		Start
+		/* Systems functions */
+		Sys_Init = 0,		/*!< Initialize the system. Called after the system start. */
+		Sys_Check,			/*!< Make a system check. */
+		Sys_Welcome,		/*!< Sends the welcome text over the interface. */
+
+		/* User commands */
+		UC_Cmd,				/*!< Change into the command mode. */
+		UC_Data,			/*!< Change into the data mode and starts the data acquisition. */
+		UC_Reboot,			/*!< Reboot the system. */
+		UC_SetCommEcho,		/*!< Enable/disable the command echo. */
+		UC_SetCommRespmsg,	/*!< Enable/disable the response message. */
+		US_SetScanBndry,	/*!< Configure the scan area boundary. */
+		US_SetScanStep,		/*!< Configure the step size between two measurement points. */
+		US_SetScanRate,		/*!< Configure the update rate of the hole room map. */
+		US_SetEngineSleep,	/*!< Sets the time delay before the engine is suspended. */
+		US_GetAll,			/*!< Get all configured parameters. */
+		US_GetVer,			/*!< Get the version number. */
+		US_GetComm,			/*!< Get the communication configurations. */
+		US_GetScan,			/*!< Get the scan configurations. */
+		US_GetEngine,		/*!< Get the engine configurations. */
+		US_EE,				/*!< Some magic feature. */
+
+		/* User Command Error */
+		ErrUC_UnknownCommand,	/*!< A unknown command is received. */
+		ErrUC_TooFewArgs,	/*!< To few arguments in the command. */
+		ErrUC_FaultArgType,	/*!< One or more arguments were in the fault data type. */
+		ErrUC_ArgOutOfBounds,	/*!< One or more arguments were out of the allowed bounds. */
+
+		/* System malfunctions */
+		Malf_LineOverflow,	/*!< Command line overflow detected. */
+		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
+		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
+		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
+		Malf_Tdc			/*!< TDC stat register has an unexpected value. */
 	} command;
 
 	union {
-		uint8_t echo; /*!< 1 := ON; 0 := OFF */
-		uint8_t respmsg; /*!< 1:= message + message code; 0:= only the message */
-		uint8_t speed; /*!< speed in % from 0 to 100 */
-		uint8_t brightness;	/*!< brightness of the flashlight from 0 to 100 */
-		uint8_t error; /*!< error ID's, \see TaskController.h */
+		/* User command parameters */
+		uint8_t echo;		/*!< Enable or disable the RS232 echo. */
+		uint8_t respmsg;	/*!< Enable or disable the response message. */
+		uint8_t sleep;		/*!< Ticks before the engine is suspended. */
+		struct {
+			int16_t left;	/*!< Left azimuth boundary. */
+			int16_t right;	/*!< Right azimuth boundary. */
+		} azimuth_bndry;	/*!< Azimuth boundary. */
+		int16_t azimuth_step;	/*!< Azimuth step size. */
+		uint8_t scan_rate;	/*!< Update rate of the room map. */
+		/* System malfunction parameters */
+		uint16_t gp22_stat;	/*!< State register of the GP22. */
 	} param;
 } command_t;
 
