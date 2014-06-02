@@ -105,7 +105,7 @@ void taskGatekeeper(void* pvParameters) {
 			/* Send the message type selector */
 			while (!bsp_SerialCharPut(message.type)) {
 				/* No space available in the circular buffer */
-				vTaskDelay(10/portTICK_RATE_MS);
+				vTaskDelay(10/portTICK_PERIOD_MS);
 			}
 
 			/* Send the string to the TX output buffer */
@@ -113,7 +113,7 @@ void taskGatekeeper(void* pvParameters) {
 			while (*ptr != '\0') {
 				while (!bsp_SerialCharPut(*ptr++)) {
 					/* No space available in the circular buffer */
-					vTaskDelay(10/portTICK_RATE_MS);
+					vTaskDelay(10/portTICK_PERIOD_MS);
 				}
 			}
 
@@ -121,7 +121,7 @@ void taskGatekeeper(void* pvParameters) {
 			for (i=0; i<sizeof(frame_end)-1; i++) {
 				while (!bsp_SerialCharPut(frame_end[i])) {
 					/* No space available in the circular buffer */
-					vTaskDelay(10/portTICK_RATE_MS);
+					vTaskDelay(10/portTICK_PERIOD_MS);
 				}
 			}
 
