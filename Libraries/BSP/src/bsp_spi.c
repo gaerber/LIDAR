@@ -70,7 +70,7 @@ void bsp_SPIInit(void) {
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;	/* Falling clock edge */
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;	/* SPI_BaudRatePrescaler_8 -> 10.5MHz */
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;	/* SPI_BaudRatePrescaler_8 -> 10.5MHz */
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
 	SPI_Init(BSP_SPI_PORT, &SPI_InitStructure);
