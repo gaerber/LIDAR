@@ -34,12 +34,14 @@
 #include "queue.h"
 #include "semphr.h"
 #include "timers.h"
+#include "memPoolService.h"
 
 /* Application */
 #include "task_comminterp.h"
 #include "task_controller.h"
 #include "task_gatekeeper.h"
 #include "task_scanner.h"
+#include "task_dataprocessing.h"
 
 /**
  * \brief	A blocked time delay.
@@ -73,6 +75,7 @@ int main(void) {
 	taskControllerInit();
 	taskGatekeeperInit();
 	taskScannerInit();
+	taskDataProcessingInit();
 
 	/* Start the scheduler */
 	vTaskStartScheduler();
