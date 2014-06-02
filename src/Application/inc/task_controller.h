@@ -59,16 +59,16 @@ typedef struct {
 		UC_Reboot,			/*!< Reboot the system. */
 		UC_SetCommEcho,		/*!< Enable/disable the command echo. */
 		UC_SetCommRespmsg,	/*!< Enable/disable the response message. */
-		US_SetScanBndry,	/*!< Configure the scan area boundary. */
-		US_SetScanStep,		/*!< Configure the step size between two measurement points. */
-		US_SetScanRate,		/*!< Configure the update rate of the hole room map. */
-		US_SetEngineSleep,	/*!< Sets the time delay before the engine is suspended. */
-		US_GetAll,			/*!< Get all configured parameters. */
-		US_GetVer,			/*!< Get the version number. */
-		US_GetComm,			/*!< Get the communication configurations. */
-		US_GetScan,			/*!< Get the scan configurations. */
-		US_GetEngine,		/*!< Get the engine configurations. */
-		US_EE,				/*!< Some magic feature. */
+		UC_SetScanBndry,	/*!< Configure the scan area boundary. */
+		UC_SetScanStep,		/*!< Configure the step size between two measurement points. */
+		UC_SetScanRate,		/*!< Configure the update rate of the hole room map. */
+		UC_SetEngineSleep,	/*!< Sets the time delay before the engine is suspended. */
+		UC_GetAll,			/*!< Get all configured parameters. */
+		UC_GetVer,			/*!< Get the version number. */
+		UC_GetComm,			/*!< Get the communication configurations. */
+		UC_GetScan,			/*!< Get the scan configurations. */
+		UC_GetEngine,		/*!< Get the engine configurations. */
+		UC_EE,				/*!< Some magic feature. */
 
 		/* User Command Error */
 		ErrUC_UnknownCommand,	/*!< A unknown command is received. */

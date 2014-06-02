@@ -179,52 +179,52 @@ void taskController(void* pvParameters) {
 				break;
 
 			/* Configure the scan area boundary */
-			case US_SetScanBndry:
+			case UC_SetScanBndry:
 
 				break;
 
 			/* Configure the step size between two measurement points */
-			case US_SetScanStep:
+			case UC_SetScanStep:
 
 				break;
 
 			/* Configure the update rate of the hole room map */
-			case US_SetScanRate:
+			case UC_SetScanRate:
 
 				break;
 
 			/* Sets the time delay before the engine is suspended */
-			case US_SetEngineSleep:
+			case UC_SetEngineSleep:
 
 				break;
 
 			/* Get all configured parameters */
-			case US_GetAll:
+			case UC_GetAll:
 
 				break;
 
 			/* Get the version number */
-			case US_GetVer:
+			case UC_GetVer:
 
 				break;
 
 			/* Get the communication configurations */
-			case US_GetComm:
+			case UC_GetComm:
 
 				break;
 
 			/* Get the scan configurations */
-			case US_GetScan:
+			case UC_GetScan:
 
 				break;
 
 			/* Get the engine configurations */
-			case US_GetEngine:
+			case UC_GetEngine:
 
 				break;
 
 			/* Some magic feature */
-			case US_EE:
+			case UC_EE:
 
 				break;
 
