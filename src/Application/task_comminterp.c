@@ -13,14 +13,21 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 /* RTOS */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "semphr.h"
 
 /* Application */
 #include "task_comminterp.h"
+#include "task_controller.h"
+#include "task_gatekeeper.h"
+
+/* BSP */
+#include "bsp_serial.h"
 
 
 /*
@@ -29,6 +36,22 @@
  * ----------------------------------------------------------------------------
  */
 void taskCommInterp(void* pvParameters);
+void* resolveCommand(char *msg);
+void* resolveCommandSet(char *msg);
+void* resolveCommandSetComm(char *msg);
+void* resolveCommandSetScan(char *msg);
+void* resolveCommandSetEngine(char *msg);
+void* resolveCommandGet(char *msg);
+uint8_t resolveParamOnOff(char *msg, uint8_t param_end, uint8_t *param);
+uint8_t resolveParamNumber(char *msg, uint8_t param_end, int32_t *param);
+
+
+/*
+ * ----------------------------------------------------------------------------
+ * Private data types
+ * ----------------------------------------------------------------------------
+ */
+typedef void* (*msg_filter_t)(char *msg);
 
 
 /*
@@ -75,15 +98,483 @@ void taskCommInterpInit(void) {
  * \brief	Command interpreter Task. Implementation of the command interpreter task with his own loop.
  */
 void taskCommInterp(void* pvParameters) {
+	command_t resolved_command;
+	readcommand_t read_command;
+
+	char command[COMMAND_BUFFER_LENGTH];
+	uint8_t write_index;
+	uint8_t command_complete;
+
+	msg_filter_t filter_function;
+	uint8_t timeout;
 
 	/* Loop forever */
 	for (;;) {
-		vTaskDelay(100);
+		/* The controller gives the approval to read an user command */
+		if (xQueueReceive(queueReadCommand, &read_command, portMAX_DELAY) == pdTRUE) {
+			/* Reset the command */
+			write_index = 0;
+			command_complete = 0;
+
+			/* Check if the echo is enabled */
+			if (read_command) {
+				/* Takes the mutual exclusion to write into the circular buffer */
+				xSemaphoreTake(mutexTxCircBuf, portMAX_DELAY);
+
+				/* Send the message type */
+				while (!bsp_SerialCharPut(MSG_TYPE_ECHO)) {
+					vTaskDelay(10/portTICK_RATE_MS);
+				}
+			}
+
+			/* Reads the message until the frame */
+			do {
+				if (bsp_SerialCharGet(&(command[write_index]))) {
+					/* Character echo */
+					if (read_command) {
+						/* Puts the echo */
+						while (!bsp_SerialCharPut(command[write_index])) {
+							vTaskDelay(10/portTICK_RATE_MS);
+						}
+					}
+
+					/* Check the command end line */
+					if (command[write_index] == '\r' || command[write_index] == '\n') {
+						/* Command end detected */
+
+						/* Release the mutual exclusion */
+						if (read_command) {
+							xSemaphoreGive(mutexTxCircBuf);
+						}
+
+						/* Check if characters were received */
+						if (write_index > 0) {
+							/* Terminate the string command */
+							command[write_index] = '\0';
+							command_complete = 1;
+						}
+					}
+					else {
+						/* Increment index if more space for character */
+						if (write_index < COMMAND_BUFFER_LENGTH - 1) {
+							write_index++;
+						}
+						else {
+							/* Command overflow detected */
+							write_index = 0;
+							/* Release the mutual exclusion */
+							if (read_command) {
+								xSemaphoreGive(mutexTxCircBuf);
+							}
+							/* Send an error to the controller */
+							resolved_command.command = Malf_LineOverflow;
+							xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						}
+					}
+				}
+				else {
+					/* No data in the circular buffer */
+					vTaskDelay(10/portTICK_RATE_MS);
+				}
+			}
+			while (command_complete == 0);
+
+			/* Resolve the command */
+			timeout = 5;
+			filter_function = resolveCommand;
+			do {
+				filter_function = (msg_filter_t)filter_function(command);
+			}
+			while (filter_function != NULL && timeout > 0);
+		}
 	}
 
 	/* Never reach this point */
 }
 
+void* resolveCommand(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+	msg_filter_t next_func;
+
+	switch (*msg) {
+	/* cmd */
+	case 'c':
+		if (strcmp(msg, "cmd") == 0) {
+			/* Send command to the controller */
+			resolved_command.command = UC_Cmd;
+			xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+			next_func = NULL;
+			success = 1;
+		}
+		break;
+
+	/* data */
+	case 'd':
+		if (strcmp(msg, "data") == 0) {
+			/* Send command to the controller */
+			resolved_command.command = UC_Data;
+			xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+			next_func = NULL;
+			success = 1;
+		}
+		break;
+
+	/* reboot */
+	case 'r':
+		if (strcmp(msg, "reboot") == 0) {
+			/* Send command to the controller */
+			resolved_command.command = UC_Reboot;
+			xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+			next_func = NULL;
+			success = 1;
+		}
+		break;
+
+	/* set */
+	case 's':
+		if (strncmp(msg, "set ", 4) == 0) {
+			/* Update the parameters */
+			next_func = resolveCommandSet;
+			msg += 4;
+			success = 1;
+		}
+		break;
+
+	/* get */
+	case 'g':
+		if (strncmp(msg, "get ", 4) == 0) {
+			/* Update the parameters */
+			next_func = resolveCommandGet;
+			msg += 4;
+			success = 1;
+		}
+		break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		next_func = NULL;
+	}
+
+	return (void*)next_func;
+}
+
+void* resolveCommandSet(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+	msg_filter_t next_func;
+
+	switch (*msg) {
+	/* set comm */
+	case 'c':
+		if (strncmp(msg, "comm ", 5) == 0) {
+			/* Update the parameters */
+			next_func = resolveCommandSetComm;
+			msg += 5;
+			success = 1;
+		}
+		break;
+
+	/* set scan */
+	case 's':
+		if (strncmp(msg, "scan ", 5) == 0) {
+			/* Update the parameters */
+			next_func = resolveCommandGet;
+			msg += 5;
+			success = 1;
+		}
+		break;
+
+	/* set engine */
+	case 'e':
+		if (strncmp(msg, "engine ", 7) == 0) {
+			/* Update the parameters */
+			next_func = resolveCommandGet;
+			msg += 7;
+			success = 1;
+		}
+		break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		next_func = NULL;
+	}
+
+	return (void*)next_func;
+}
+
+void* resolveCommandSetComm(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+
+	switch (*msg) {
+		/* set comm echo */
+		case 'c':
+			if (strncmp(msg, "echo ", 5) == 0) {
+				/* Check the user parameters */
+				msg += 5;
+				if (resolveParamOnOff(msg, 1, &(resolved_command.param.echo))) {
+					resolved_command.command = UC_SetCommEcho;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+
+		/* set comm respmsg */
+		case 's':
+			if (strncmp(msg, "respmsg ", 8) == 0) {
+				/* Check the user parameters */
+				msg += 8;
+				if (resolveParamOnOff(msg, 1, &(resolved_command.param.respmsg))) {
+					resolved_command.command = UC_SetCommRespmsg;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+	}
+
+	return (void*)NULL;
+}
+
+void* resolveCommandSetScan(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+	int32_t number1, number2;
+
+	switch (*msg) {
+		/* set scan bndry */
+		case 'b':
+			if (strncmp(msg, "bndry ", 6) == 0) {
+				/* Check the user parameters */
+				msg += 6;
+				if (resolveParamNumber(msg, 0, &number1) && resolveParamNumber(msg, 1, &number2)) {
+					/* Check if the value were in bound */
+					resolved_command.command = UC_SetScanBndry;
+					resolved_command.param.azimuth_bndry.left = (int16_t) number1;
+					resolved_command.param.azimuth_bndry.right = (int16_t) number2;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+
+		/* set scan step */
+		case 's':
+			if (strncmp(msg, "step ", 5) == 0) {
+				/* Check the user parameters */
+				msg += 5;
+				if (resolveParamNumber(msg, 1, &number1)) {
+					resolved_command.command = UC_SetScanStep;
+					resolved_command.param.azimuth_step = (int16_t) number1;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+
+		/* set scan rate */
+		case 'r':
+			if (strncmp(msg, "rate ", 5) == 0) {
+				/* Check the user parameters */
+				msg += 5;
+				if (resolveParamNumber(msg, 1, &number1)) {
+					resolved_command.command = UC_SetScanRate;
+					resolved_command.param.scan_rate = number1;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+	}
+
+	return (void*)NULL;
+}
+
+void* resolveCommandSetEngine(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+	int32_t number;
+
+	switch (*msg) {
+		/* set engine sleep */
+		case 's':
+			if (strncmp(msg, "sleep ", 6) == 0) {
+				/* Check the user parameters */
+				msg += 6;
+				if (resolveParamNumber(msg, 1, &number)) {
+					resolved_command.command = UC_SetEngineSleep;
+					resolved_command.param.sleep = number;
+					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				}
+				success = 1;
+			}
+			break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+	}
+
+	return (void*)NULL;
+}
+
+void* resolveCommandGet(char *msg) {
+	uint8_t success = 0;
+	command_t resolved_command;
+	msg_filter_t next_func;
+
+	switch (*msg) {
+		/* get all */
+		case 'a':
+			if (strcmp(msg, "all") == 0) {
+				/* Send command to the controller */
+				resolved_command.command = UC_GetAll;
+				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				next_func = NULL;
+				success = 1;
+			}
+			break;
+
+		/* get ver */
+		case 'v':
+			if (strcmp(msg, "ver") == 0) {
+				/* Send command to the controller */
+				resolved_command.command = UC_GetVer;
+				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				next_func = NULL;
+				success = 1;
+			}
+			break;
+
+		/* get comm */
+		case 'c':
+			if (strcmp(msg, "comm") == 0) {
+				/* Send command to the controller */
+				resolved_command.command = UC_GetComm;
+				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				next_func = NULL;
+				success = 1;
+			}
+			break;
+
+		/* get scan */
+		case 's':
+			if (strcmp(msg, "scan") == 0) {
+				/* Send command to the controller */
+				resolved_command.command = UC_GetScan;
+				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				next_func = NULL;
+				success = 1;
+			}
+			break;
+
+		/* get engine */
+		case 'e':
+			if (strcmp(msg, "engine") == 0) {
+				/* Send command to the controller */
+				resolved_command.command = UC_GetEngine;
+				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				next_func = NULL;
+				success = 1;
+			}
+			break;
+	}
+
+	if (success == 0) {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_UnknownCommand;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		next_func = NULL;
+	}
+
+	return (void*)next_func;
+}
+
+uint8_t resolveParamOnOff(char *msg, uint8_t param_end, uint8_t *param) {
+	uint8_t success = 1;
+	command_t resolved_command;
+
+	if (strncmp(msg, "on", 2) == 0) {
+		*param = 1;
+		msg += 2;
+	}
+	else if (strncmp(msg, "off", 3) == 0) {
+		*param = 0;
+		msg += 3;
+	}
+	else {
+		/* Send the error message to the controller */
+		resolved_command.command = ErrUC_FaultArgType;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		success = 0;
+	}
+
+	/* Check the number of arguments */
+	if (success && ((param_end && *msg != '\0') || (!param_end && *msg != ' '))) {
+		resolved_command.command = ErrUC_TooFewArgs;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		success = 0;
+	}
+
+	return success;
+}
+
+uint8_t resolveParamNumber(char *msg, uint8_t param_end, int32_t *param) {
+	uint8_t success = 1;
+	command_t resolved_command;
+	uint8_t digits = 0;
+
+	if (*msg == '-') {
+		*param = -1;
+		msg++;
+	}
+	else {
+		*param = 1;
+	}
+
+	while ('0' <= *msg && *msg <= '9' && digits++ < 9) {
+		*param = 10 * (*param) + ((*msg) - '0');
+		msg++;
+	}
+
+	/* Overflow protection */
+	if (digits > 9) {
+		resolved_command.command = ErrUC_ArgOutOfBounds;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		success = 0;
+	}
+
+	/* Check the number of arguments */
+	if (((param_end && *msg != '\0') || (!param_end && *msg != ' '))) {
+		resolved_command.command = ErrUC_TooFewArgs;
+		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		success = 0;
+	}
+
+	return success;
+}
 
 /**
  * @}
