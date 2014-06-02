@@ -46,10 +46,10 @@
  * \brief	Raw data structure of a point of the room map.
  */
 typedef struct {
-	uint32_t increments;
-	uint32_t calibration;
-	uint32_t raw_ctr;
-	uint32_t raw[MAX_RAWDATA_LENGTH];
+	uint32_t increments;		/*!< Azimuth in increments. */
+	uint32_t cal_resonator;		/*!< Raw calibration value of the resonator. */
+	uint32_t raw_ctr;			/*!< Raw data counter. */
+	uint32_t raw[MAX_RAWDATA_LENGTH];	/*!< Raw data. */
 } rawdata_t;
 
 
