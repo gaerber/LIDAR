@@ -144,13 +144,17 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
 		bsp_QuadencPosCallback(azimuthPDCalibrationHandler);
 		bsp_QuadencSetCapture(1);
 
+#if (BSP_GP22_REG0 & (1<<13))
 		/* Disable the automatic calibration calculation on the TDC */
 		reg = BSP_GP22_REG0 & (~(1<<13));
 		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
+#endif
 
+#if (BSP_GP22_REG1 & (1<<23))
 		/* Disable the fast init feature */
 		reg = BSP_GP22_REG1 & (~(1<<23));
 		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
+#endif
 
 		/* Starts a calibration measurement for the high speed clock */
 		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
@@ -170,22 +174,20 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
 void tdcHighSpeedCalibrationHandler(void) {
 	uint32_t result;
 
-	/* Read the state register */
-//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
-	result=0;
-
-	/* Check the state */
-	if (result == 0x00) {
-		/* Read the calibration value */
-		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
-	}
-	else {
-		/** @Todo: Error handling */
-	}
+	/* Read the calibration value */
+	bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
 
 	/* Reset the configuration */
+#if (BSP_GP22_REG0 & (1<<13))
 	bsp_GP22RegWrite(GP22_WR_REG_0, BSP_GP22_REG0);
+#endif
+
+#if (BSP_GP22_REG1 & (1<<23))
 	bsp_GP22RegWrite(GP22_WR_REG_1, BSP_GP22_REG1);
+#endif
+
+	/* Make the TDC ready for a measurement */
+	bsp_GP22SendOpcode(GP22_OP_Init);
 }
 
 
@@ -209,10 +211,7 @@ void azimuthPDCalibrationHandler(uint32_t azimuth) {
 		/* Set the TDC callback function */
 		bsp_GP22IntCallback(tdcPropagationDelayCalibrationHandler);
 
-		/* Make the TDC ready */
-		bsp_GP22SendOpcode(GP22_OP_Init);
-
-		/* Starts a measurement */
+		/* Starts a measurement sequence */
 		bsp_LaserPulse(g_settings.laser_pulses);
 	}
 	else {
@@ -228,17 +227,20 @@ void tdcPropagationDelayCalibrationHandler(void) {
 	uint32_t result;
 
 	/* Read the state register */
-//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
-	result=0x48;
+	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
 
 	/* Check the state */
-	if (result == 0x48) {
+	if ((result & 0xF8) == 0x48) {
 		/* Read the calibration value */
 		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
 	}
 	else {
 		/** @Todo: Error handling */
+		//Direkt an Controller senden
 	}
+
+	/* Make the TDC ready for a measurement */
+	bsp_GP22SendOpcode(GP22_OP_Init);
 }
 
 
@@ -269,6 +271,8 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 			bsp_QuadencSetCapture(DA_AZIMUTH_MAX + 2 * DA_AZIMUTH_RES);
 		}
 
+		/* Get the memory pool */
+
 		/* Set the TDC callback function */
 		bsp_GP22IntCallback(tdcMeasurementHandler);
 
@@ -288,17 +292,25 @@ void tdcMeasurementHandler(void) {
 	uint32_t result;
 
 	/* Read the state register */
-//	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
-	result=0x48;
+	bsp_GP22RegRead(GP22_RD_STAT, &result, 2);
 
 	/* Check the state */
-	if (result == 0x48) {
+	if ((result & 0xF8) == 0x48) {
 		/* Read the calibration value */
 		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
 	}
 	else {
-		/** @Todo: Error handling */
+		/* Check if no reflection is detected */
+		if ((result & 0xF8) == 0x08) {
+
+		}
+		else {
+			/** @Todo: Error handling */
+		}
 	}
+
+	/* Make the TDC ready for a measurement */
+	bsp_GP22SendOpcode(GP22_OP_Init);
 }
 
 
