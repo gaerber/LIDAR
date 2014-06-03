@@ -80,11 +80,11 @@ static const bsp_gpioconf_t BSP_QUADENC_INCI = {
 /* Interrupt settings */
 #define BSP_QUADENC_POS_IRQ_CHANEL		TIM1_CC_IRQn		/*!< NVIC timer interrupt (capture compare) */
 #define BSP_QUADENC_POS_IRQ_SOURCE		TIM_IT_CC3			/*!< NVIC timer source */
-#define BSP_QUADENC_POS_IRQ_PRIORITY	3					/*!< NVIC timer interrupt priority */
+#define BSP_QUADENC_POS_IRQ_PRIORITY	5					/*!< NVIC timer interrupt priority */
 #define BSP_QUADENC_POS_IRQ_Handler		TIM1_CC_IRQHandler	/*!< NVIC timer handler */
 
 #define BSP_QUADENC_I_IRQ_CHANEL		EXTI2_IRQn			/*!< NVIC GPIO interrupt */
-#define BSP_QUADENC_I_IRQ_PRIORITY		8					/*!< NVIC GPIO interrupt priority */
+#define BSP_QUADENC_I_IRQ_PRIORITY		4					/*!< NVIC GPIO interrupt priority */
 #define BSP_QUADENC_I_IRQ_Handler		EXTI2_IRQHandler	/*!< NVIC GPIO handler */
 
 

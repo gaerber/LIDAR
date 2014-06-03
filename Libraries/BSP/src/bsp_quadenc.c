@@ -210,8 +210,10 @@ void bsp_QuadencInit(void) {
  * 			value is probably incorrect.
  */
 uint8_t bsp_QuadencGet(uint32_t *azimuth) {
-	/* Gets the counter value */
-	*azimuth = TIM_GetCounter(BSP_QUADENC_TIMER);
+	if (g_calibration) {
+		/* Gets the counter value */
+		*azimuth = TIM_GetCounter(BSP_QUADENC_TIMER);
+	}
 
 	return g_calibration;
 }

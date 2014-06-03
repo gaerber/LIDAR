@@ -86,8 +86,11 @@ void taskScanner(void* pvParameters) {
 	uint32_t current_azimuth;
 	uint32_t last_azimuth = 0;
 
-	int32_t set_point;
+	int32_t set_point = 1000;
 	int32_t process_variable;
+	int32_t e;
+	int32_t e_sum = 0;
+	int32_t controlling_element;
 
 	// setpoint (sp) = Sollwert
 	// measured process variable (PV) = Istwert
@@ -98,13 +101,10 @@ void taskScanner(void* pvParameters) {
 	/* Loop forever */
 	for (;;) {
 		/* Wait for the next cycle */
-		vTaskDelayUntil(&xLastWakeTime, 1);
+		vTaskDelayUntil(&xLastWakeTime, ENGINE_CONTROLER_TA);
 
 		/* Get the current azimuth */
-		//BUG: wert wird immer verändert!
 		bsp_QuadencGet(&current_azimuth);
-
-
 
 		/* Calculate the current speed */
 		process_variable = current_azimuth - last_azimuth;
@@ -112,7 +112,23 @@ void taskScanner(void* pvParameters) {
 			process_variable += BSP_QUADENC_INC_PER_TURN;
 		}
 
+		/* Calculate the difference */
+		e = set_point - process_variable;
+		e_sum = e_sum + e;
 
+		/* PI controller */
+		controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
+
+		/* Anti windup circuit */
+		if (controlling_element > BSP_ENGINE_PWM_PERIOD) {
+			controlling_element = BSP_ENGINE_PWM_PERIOD;
+		}
+		if (controlling_element < -1 * BSP_ENGINE_PWM_PERIOD) {
+			controlling_element = -1 * BSP_ENGINE_PWM_PERIOD;
+		}
+
+		/* Sets the new controlling element */
+		bsp_EngineSpeed(controlling_element);
 	}
 
 	/* Never reach this point */
