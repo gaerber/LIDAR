@@ -43,6 +43,8 @@
 #include "task_scanner.h"
 #include "task_dataprocessing.h"
 
+#include "task_dataacquisition.h"
+
 /**
  * \brief	A blocked time delay.
  */
