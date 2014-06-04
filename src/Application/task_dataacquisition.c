@@ -66,6 +66,7 @@ void taskDataAcquisitionInit(void) {
 
 /**
  * \brief	Data acquisition Task. Implementation of the Data acquisition task with his own loop.
+ * \param[in]	pvParameters task parameters. Not used.
  */
 void taskDataAcquisition(void* pvParameters) {
 

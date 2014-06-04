@@ -33,6 +33,7 @@
 /* BSP */
 #include "bsp_led.h"
 #include "bsp_quadenc.h"
+#include "bsp_laser.h"
 
 extern void Reset_Handler(void);
 extern int sprintf(char* str, const char *fmt, ...);
@@ -233,6 +234,7 @@ void taskControllerInit(void) {
 
 /**
  * \brief	Controller Task. Implementation of the controller task with his own loop.
+ * \param[in]	pvParameters task parameters. Not used.
  */
 void taskController(void* pvParameters) {
 	command_t command;

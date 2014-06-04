@@ -89,6 +89,7 @@ void taskDataProcessingInit(void) {
 
 /**
  * \brief	Controller Task. Implementation of the controller task with his own loop.
+ * \param[in]	pvParameters task parameters. Not used.
  */
 void taskDataProcessing(void* pvParameters) {
 	rawdata_t *raw_data;

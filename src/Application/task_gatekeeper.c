@@ -87,6 +87,7 @@ void taskGatekeeperInit(void) {
 
 /**
  * \brief	Gatekeeper Task. Implementation of the gatekeeper task with his own loop.
+ * \param[in]	pvParameters task parameters. Not used.
  */
 void taskGatekeeper(void* pvParameters) {
 	message_t message;
