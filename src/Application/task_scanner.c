@@ -79,6 +79,7 @@ void taskScannerInit(void) {
 
 /**
  * \brief	Scanner Task. Implementation of the scanner task with his own loop.
+ * \param[in]	pvParameters task parameters. Not used.
  */
 void taskScanner(void* pvParameters) {
 	TickType_t xLastWakeTime;
@@ -90,7 +91,7 @@ void taskScanner(void* pvParameters) {
 	int32_t process_variable;
 	int32_t e;
 	int32_t e_sum = 0;
-	int32_t controlling_element;
+	int32_t controlling_element = 0;
 
 	// setpoint (sp) = Sollwert
 	// measured process variable (PV) = Istwert
@@ -114,12 +115,16 @@ void taskScanner(void* pvParameters) {
 
 		/* Calculate the difference */
 		e = set_point - process_variable;
-		e_sum = e_sum + e;
+
+		/* Anti windup circuit */
+		if (controlling_element <= BSP_ENGINE_PWM_PERIOD && controlling_element >= -1 * BSP_ENGINE_PWM_PERIOD) {
+			e_sum = e_sum + e;
+		} /* In case of assessed controlling element -> integrator freeze */
 
 		/* PI controller */
 		controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
 
-		/* Anti windup circuit */
+		/* Limit the controlling element */
 		if (controlling_element > BSP_ENGINE_PWM_PERIOD) {
 			controlling_element = BSP_ENGINE_PWM_PERIOD;
 		}
