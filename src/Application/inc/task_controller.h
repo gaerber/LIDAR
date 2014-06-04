@@ -41,7 +41,7 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define LIDAR_VERSION				"0.1 RC"	/*!< LIDAR versions number [string] */
+#define LIDAR_VERSION				"0.1A"	/*!< LIDAR versions number [string] */
 
 
 /*
@@ -55,6 +55,7 @@
  * 			and the new parameters.
  */
 typedef struct {
+	/*! The command or system event. */
 	enum {
 		/* Systems functions */
 		Sys_Init = 0,		/*!< Initialize the system. Called after the system start. */
@@ -93,6 +94,7 @@ typedef struct {
 		Malf_Tdc			/*!< TDC stat register has an unexpected value. */
 	} command;
 
+	/*! The parameters of the command/event. */
 	union {
 		/* User command parameters */
 		uint8_t echo;		/*!< Enable or disable the RS232 echo. */

@@ -50,25 +50,25 @@ extern int sprintf(char* str, const char *fmt, ...);
  */
 typedef struct {
 	/* User settings */
-	uint8_t comm_echo;
-	uint8_t comm_respmsg;
-	int16_t scan_bndry_left;
-	int16_t scan_bndry_right;
-	int16_t scan_step;
-	uint8_t scan_rate;
-	uint16_t engine_sleep;
+	uint8_t comm_echo;			/*!< Enable or disable the command echo. */
+	uint8_t comm_respmsg;		/*!< Enable or disable the response message. */
+	int16_t scan_bndry_left;	/*!< Configured scan area boundary left. [tenth degree] */
+	int16_t scan_bndry_right;	/*!< Configured scan area boundary right. [tenth degree] */
+	int16_t scan_step;			/*!< Configures step size between two measurement points. [tenth degree] */
+	uint8_t scan_rate;			/*!< Configured update rate of the hole room map. [turns per second] */
+	uint16_t engine_sleep;		/*!< Configured time delay before the engine is suspended in CMD mode. [ms] */
 
 	/* System settings */
 	enum {
-		MODE_CMD,
-		MODE_DATA
-	} state;
-	readcommand_t readcommand;
-	uint32_t atzimuth_left;
-	uint32_t azimuth_right;
-	uint32_t azimuth_res;
-	uint32_t laser_pulses;
-	int32_t engine_speed;
+		MODE_CMD,				/*!< Mode CMD. */
+		MODE_DATA				/*!< Mode DATA. */
+	} state;					/*!< System mode. */
+	readcommand_t readcommand;	/*!< The read command value for the command interpreter task. */
+	uint32_t atzimuth_left;		/*!< Calculated scan area boundary left. [increments] */
+	uint32_t azimuth_right;		/*!< Calculated scan area boundary right. [increments] */
+	uint32_t azimuth_res;		/*!< Calculated step size between two measurement points. [increments] */
+	uint32_t laser_pulses;		/*!< Number of laser pulses each measurement point. */
+	int32_t engine_speed;		/*!< Engine speed in increments per time interval. */
 } system_t;
 
 
@@ -85,6 +85,9 @@ void taskController(void* pvParameters);
 void sendMessage(char msg_typw, const char* msg);
 void triggerMalfunctionLed(void);
 
+/**
+ * \brief
+ */
 int16_t increments2tenthdegree(uint32_t increments) {
 	return round(3600 / BSP_QUADENC_INC_PER_TURN * increments - 1800);
 }
