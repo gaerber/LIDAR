@@ -117,7 +117,7 @@ void taskScanner(void* pvParameters) {
 		e = set_point - process_variable;
 
 		/* Anti windup circuit */
-		if (controlling_element <= BSP_ENGINE_PWM_PERIOD && controlling_element >= -1 * BSP_ENGINE_PWM_PERIOD) {
+		if (controlling_element < BSP_ENGINE_PWM_PERIOD && controlling_element > -1 * BSP_ENGINE_PWM_PERIOD) {
 			e_sum = e_sum + e;
 		} /* In case of assessed controlling element -> integrator freeze */
 
