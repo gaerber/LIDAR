@@ -55,7 +55,7 @@
 /**
  * \brief	Data type of the rotation speed.
  */
-typedef uint32_t speed_t;
+typedef int32_t speed_t;
 
 
 /*
