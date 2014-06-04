@@ -13,6 +13,8 @@
  */
 
 #include <stdint.h>
+#include <string.h>
+#include <math.h>
 
 /* RTOS */
 #include "FreeRTOS.h"
@@ -25,11 +27,48 @@
 #include "task_controller.h"
 #include "data_acquisition.h"
 #include "task_gatekeeper.h"
+#include "task_comminterp.h"
+#include "task_scanner.h"
 
 /* BSP */
 #include "bsp_led.h"
+#include "bsp_quadenc.h"
 
 extern void Reset_Handler(void);
+extern int sprintf(char* str, const char *fmt, ...);
+
+
+/*
+ * ----------------------------------------------------------------------------
+ * Private data types
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * \brief	Contains all system states and configurations.
+ */
+typedef struct {
+	/* User settings */
+	uint8_t comm_echo;
+	uint8_t comm_respmsg;
+	int16_t scan_bndry_left;
+	int16_t scan_bndry_right;
+	int16_t scan_step;
+	uint8_t scan_rate;
+	uint16_t engine_sleep;
+
+	/* System settings */
+	enum {
+		MODE_CMD,
+		MODE_DATA
+	} state;
+	readcommand_t readcommand;
+	uint32_t atzimuth_left;
+	uint32_t azimuth_right;
+	uint32_t azimuth_res;
+	uint32_t laser_pulses;
+	int32_t engine_speed;
+} system_t;
 
 
 /*
@@ -38,9 +77,24 @@ extern void Reset_Handler(void);
  * ----------------------------------------------------------------------------
  */
 void MalfLedCallback(TimerHandle_t xTimer);
+void engineStandByCallback(TimerHandle_t xTimer);
+void systemCheckCallback(TimerHandle_t xTimer);
+
 void taskController(void* pvParameters);
 void sendMessage(char msg_typw, const char* msg);
 void triggerMalfunctionLed(void);
+
+int16_t increments2tenthdegree(uint32_t increments) {
+	return round(3600 / BSP_QUADENC_INC_PER_TURN * increments - 1800);
+}
+
+uint32_t tenthdegree2increments(int16_t tenthdegree) {
+	return round((tenthdegree + 1800) / 3600 * BSP_QUADENC_INC_PER_TURN);
+}
+
+uint32_t tenthdegree2increments_Relative(int16_t tenthdegree) {
+	return round(tenthdegree / 3600 * BSP_QUADENC_INC_PER_TURN);
+}
 
 
 /*
@@ -71,6 +125,21 @@ QueueHandle_t queueCommand;
  */
 TimerHandle_t timerMalfunctionLed;
 
+/**
+ * \brief	Software timer handler for the engine sleep feature.
+ */
+TimerHandle_t timerEngineSleep;
+
+/**
+ * \brief	Software timer handler for the cycle system test.
+ */
+TimerHandle_t timerSystemCheck;
+
+/**
+ * \brief	The actual system state and configurations.
+ */
+
+system_t g_systemState;
 
 /*
  * ----------------------------------------------------------------------------
@@ -78,8 +147,54 @@ TimerHandle_t timerMalfunctionLed;
  * ----------------------------------------------------------------------------
  */
 
+/**
+ * \brief	Timer callback function to switch off the malfunction LED after
+ * 			tree seconds.
+ * \param[in]	xTimer The identifier that is assigned to the timer being called.
+ * 				Not used.
+ */
 void MalfLedCallback(TimerHandle_t xTimer) {
-	/* Reset the LED */
+	/* Reset the error LED */
+	bsp_LedSetOff(BSP_LED_RED);
+}
+
+/**
+ * \brief	Timer callback function to stop the engine after a defines time
+ * 			delay.
+ * \param[in]	xTimer The identifier that is assigned to the timer being called.
+ * 				Not used.
+ */
+void engineStandByCallback(TimerHandle_t xTimer) {
+	/* Stop the engine */
+	speed_t engine_speed = 0;
+	xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
+}
+
+/**
+ * \brief	Timer callback function to make a system check of the data acquisition.
+ * 			The Laser driver error flag will be checked.
+ * \param[in]	xTimer The identifier that is assigned to the timer being called.
+ * 				Not used.
+ */
+void systemCheckCallback(TimerHandle_t xTimer) {
+	command_t command;
+	uint8_t overcurrent;
+	static uint8_t overcurrent_last = 1;
+
+	/* Get the overcurrent flag */
+	overcurrent = bsp_LaserOvercurrent();
+
+	/* Check if a overcurrent is ocured */
+	if (!overcurrent && overcurrent_last) {
+		command.command = Malf_LaserDriver;
+		if (xQueueSend(queueCommand, &command, 0) == pdTRUE) {
+			overcurrent_last = overcurrent;
+		}
+		/* If queue is full, wait for an other check cycle */
+	}
+	else {
+		overcurrent_last = overcurrent;
+	}
 }
 
 
@@ -95,10 +210,10 @@ void MalfLedCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-	//bsp_LedInit();
+	bsp_LedInit();
 
 	/* Initialize the data acquisition */
-	DataAcquisitionInit();
+	//DataAcquisitionInit();
 
 	/* Generate the task */
 	xTaskCreate(taskController, TASK_CONTROLLER_NAME, TASK_CONTROLLER_STACKSIZE,
@@ -108,9 +223,12 @@ void taskControllerInit(void) {
 	queueCommand = xQueueCreate(Q_COMMAND_LENGTH, sizeof(command_t));
 
 	/* Generate the timer */
-	xTimerCreateTimerTask();
 	timerMalfunctionLed = xTimerCreate("Malf LED", 3000/portTICK_PERIOD_MS,
 			pdFALSE, (void*)BSP_LED_RED, MalfLedCallback);
+	timerEngineSleep = xTimerCreate("Engine sleep", 3000/portTICK_PERIOD_MS,
+			pdFALSE, NULL, engineStandByCallback);
+	timerSystemCheck = xTimerCreate("Sys Check", 100/portTICK_PERIOD_MS,
+			pdTRUE, NULL, systemCheckCallback);
 }
 
 /**
@@ -118,12 +236,15 @@ void taskControllerInit(void) {
  */
 void taskController(void* pvParameters) {
 	command_t command;
-	/* Timeout synchronization */
+	char str_buffer[64];
+	speed_t engine_speed;
 
-	//DEMO
-	command.command = Sys_Init;
+	/* Sends the welcome text */
+	command.command = Sys_Welcome;
 	xQueueSend(queueCommand, &command, portMAX_DELAY);
-	command.command = UC_Data;
+
+	/* initialize the system */
+	command.command = Sys_Init;
 	xQueueSend(queueCommand, &command, portMAX_DELAY);
 
 	/* Loop forever */
@@ -136,7 +257,24 @@ void taskController(void* pvParameters) {
 
 			/* Initialize the system. Called after the system start */
 			case Sys_Init:
+				/* Set the default system states and configurations */
+				g_systemState.comm_echo = 1;
+				g_systemState.comm_respmsg = 1;
+				g_systemState.scan_bndry_left = DA_AZIMUTH_MIN;
+				g_systemState.scan_bndry_right = DA_AZIMUTH_MAX;
+				g_systemState.scan_step = DA_AZIMUTH_RES;
+				g_systemState.scan_rate = DA_DEF_SCANRATE;
+				g_systemState.engine_sleep = 0;
+				g_systemState.state = MODE_CMD;
+				g_systemState.readcommand = 1;
+				g_systemState.atzimuth_left = tenthdegree2increments(DA_AZIMUTH_MIN);
+				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
+				g_systemState.azimuth_res = tenthdegree2increments(DA_AZIMUTH_RES);
+				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
+				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (DA_DEF_SCANRATE /* * REGLER_ZEITKONSTANTE_TA */);
 
+				/* Reads the first user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Make a system check */
@@ -146,131 +284,277 @@ void taskController(void* pvParameters) {
 
 			/* Sends the welcome text over the interface */
 			case Sys_Welcome:
-				sendMessage(MSG_TYPE_STATE, "LIDAR v1.0");
+				sendMessage(MSG_TYPE_STATE, "LIDAR v"LIDAR_VERSION);
 				sendMessage(MSG_TYPE_STATE, "BFH Thesis 2014");
 				sendMessage(MSG_TYPE_STATE, "By Kevin Gerber, Marcel Baertschi");
 				break;
 
 			/* Change into the command mode */
 			case UC_Cmd:
+				/* Stop the data acquisition */
+				DataAcquisitionStop();
 
+				/* todo: Stop the engine after a given time delay */
+				if (g_systemState.engine_sleep > 0) {
+					xTimerChangePeriod(timerEngineSleep, g_systemState.engine_sleep, portMAX_DELAY);
+					xTimerStart(timerEngineSleep, portMAX_DELAY);
+				}
+				else {
+					/* Stop the engine now */
+					engine_speed = 0;
+					xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
+				}
+
+				/* Change the state */
+				g_systemState.state = MODE_CMD;
+				g_systemState.readcommand = g_systemState.comm_echo;
+
+				/* Send the response message */
+				sendMessage(MSG_TYPE_STATE, "cmd");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Change into the data mode and starts the data acquisition */
 			case UC_Data:
-				DataAcquisitionStart(500,1500,100,5);
+				/* Change the system state */
+				g_systemState.state = MODE_DATA;
+				g_systemState.readcommand = 0;
+
+				/* Starts the engine */
+				xTimerStop(timerEngineSleep, portMAX_DELAY);
+				xQueueSend(queueSpeed, &g_systemState.engine_speed, portMAX_DELAY);
+
+				/* Send the response message */
+				sendMessage(MSG_TYPE_STATE, "data");
+
+				/* Starts the data acquisition */
+				DataAcquisitionStart(g_systemState.atzimuth_left, g_systemState.azimuth_right,
+						g_systemState.azimuth_res, g_systemState.laser_pulses);
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Reboot the system */
 			case UC_Reboot:
+				/* Send the response message */
+				sendMessage(MSG_TYPE_STATE, "rebooting");
+
+				/* Delay to send the output buffer */
+				vTaskDelay(10);
+
 				/* Disable all interrupts */
+				__disable_irq();
+
 				/* call the reset handler */
 				Reset_Handler();
 				break;
 
 			/* Enable/disable the command echo */
 			case UC_SetCommEcho:
+				/* Change the system state */
+				g_systemState.comm_echo = command.param.echo;
+				g_systemState.readcommand = command.param.echo;
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Enable/disable the response message */
 			case UC_SetCommRespmsg:
+				/* Change the system state */
+				g_systemState.comm_respmsg = command.param.respmsg;
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
-			/* Configure the scan area boundary */
+			/* todo: Configure the scan area boundary */
 			case UC_SetScanBndry:
 
 				break;
 
 			/* Configure the step size between two measurement points */
 			case UC_SetScanStep:
+				/* Change the system state */
+				g_systemState.scan_step = command.param.azimuth_step;
+				g_systemState.azimuth_res = tenthdegree2increments_Relative(command.param.azimuth_step);
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Configure the update rate of the hole room map */
 			case UC_SetScanRate:
+				/* Change the system state */
+				g_systemState.scan_rate = command.param.scan_rate;
+				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (command.param.scan_rate /* * REGLER_ZEITKONSTANTE_TA */);
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Sets the time delay before the engine is suspended */
 			case UC_SetEngineSleep:
+				/* Change the system state */
+				g_systemState.engine_sleep = command.param.engine_sleep;
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Get all configured parameters */
 			case UC_GetAll:
-
-				break;
+				/* Execute all get cases */
 
 			/* Get the version number */
 			case UC_GetVer:
+				/* Print the version number */
+				sendMessage(MSG_TYPE_CONF, "ver "LIDAR_VERSION);
 
-				break;
+				/* Execute all get cases */
+				if (command.command != UC_GetAll) {
+					/* Read the next user command */
+					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+					break;
+				}
 
 			/* Get the communication configurations */
 			case UC_GetComm:
+				/* Print communication echo */
+				sprintf(str_buffer, "comm echo %s", g_systemState.comm_echo ? "on" : "off");
+				sendMessage(MSG_TYPE_CONF, str_buffer);
 
-				break;
+				/* Print communication response message */
+				sprintf(str_buffer, "comm respmsg %s", g_systemState.comm_respmsg ? "on" : "off");
+				sendMessage(MSG_TYPE_CONF, str_buffer);
+
+				/* Execute all get cases */
+				if (command.command != UC_GetAll) {
+					/* Read the next user command */
+					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+					break;
+				}
 
 			/* Get the scan configurations */
 			case UC_GetScan:
+				/* Print scan boundary */
+				sprintf(str_buffer, "scan bndry %d %d", g_systemState.scan_bndry_left, g_systemState.scan_bndry_right);
+				sendMessage(MSG_TYPE_CONF, str_buffer);
 
-				break;
+				/* Print scan step */
+				sprintf(str_buffer, "scan step %d", g_systemState.scan_step);
+				sendMessage(MSG_TYPE_CONF, str_buffer);
+
+				/* Print scan rate */
+				sprintf(str_buffer, "scan rate %d", g_systemState.scan_rate);
+				sendMessage(MSG_TYPE_CONF, str_buffer);
+
+				/* Execute all get cases */
+				if (command.command != UC_GetAll) {
+					/* Read the next user command */
+					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+					break;
+				}
 
 			/* Get the engine configurations */
 			case UC_GetEngine:
+				/* Print engine sleep */
+				sprintf(str_buffer, "engien sleep %d", g_systemState.engine_sleep);
+				sendMessage(MSG_TYPE_CONF, str_buffer);
 
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
-			/* Some magic feature */
+			/* todo last: Some magic feature */
 			case UC_EE:
+				triggerMalfunctionLed();
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+				break;
+
+			/* todo last: Exit the system */
+			case UC_Exit:
 
 				break;
 
 			/* A unknown command is received */
 			case ErrUC_UnknownCommand:
-
+				sprintf(str_buffer, "%d unknown command", 11 + command.param.error_level);
+				sendMessage(MSG_TYPE_RSP, str_buffer);
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* To few arguments in the command */
 			case ErrUC_TooFewArgs:
-
+				sendMessage(MSG_TYPE_RSP, "21 too few arguments");
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* One or more arguments were in the fault data type */
 			case ErrUC_FaultArgType:
-
+				sendMessage(MSG_TYPE_RSP, "22 fault argument type");
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* One or more arguments were out of the allowed bounds */
 			case ErrUC_ArgOutOfBounds:
-
+				sendMessage(MSG_TYPE_RSP, "31 argument out of bound");
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Command line overflow detected */
-			case Malf_LineOverflow:
+			case ErrUC_LineOverflow:
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
 
+				/* Send e dummy message to be sure the frame end was sent */
+				sendMessage(MSG_TYPE_STATE, "");
+
+				/* Send the error message. */
+				sendMessage(MSG_TYPE_RSP, "91 command line overflow");
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Engine overcurrent or thermal shutdown */
 			case Malf_EngineDriver:
-
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
 			break;
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
-
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
 				break;
 
 			/* Quadrature encoder malfunction was detected */
 			case Malf_QuadEnc:
-
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
 				break;
 
 			/* TDC stat register has an unexpected value */
 			case Malf_Tdc:
-
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
 				break;
 
 			/* Command error */
@@ -292,7 +576,21 @@ void taskController(void* pvParameters) {
  * \param[in]	msg is the string.
  */
 void sendMessage(char msg_type, const char* msg) {
+	message_t message;
 
+	/* Build the message structure */
+	message.type = msg_type;
+	if (msg_type != MSG_TYPE_RSP || g_systemState.comm_respmsg) {
+		strcpy(message.msg, msg);
+	}
+	else {
+		/* Only the error number */
+		message.msg[0] = msg[0];
+		message.msg[1] = msg[1];
+	}
+
+	/* Send the message to the gatekeeper */
+	xQueueSend(queueMessage, &message, portMAX_DELAY);
 }
 
 /**
@@ -304,7 +602,7 @@ void triggerMalfunctionLed(void) {
 	xTimerStart(timerMalfunctionLed, portMAX_DELAY);
 
 	/* Set the LED */
-
+	bsp_LedSetOn(BSP_LED_RED);
 }
 
 

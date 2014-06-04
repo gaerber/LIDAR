@@ -38,6 +38,14 @@
 
 /*
  * ----------------------------------------------------------------------------
+ * Application settings
+ * ----------------------------------------------------------------------------
+ */
+#define LIDAR_VERSION				"0.1 RC"	/*!< LIDAR versions number [string] */
+
+
+/*
+ * ----------------------------------------------------------------------------
  * Type declarations
  * ----------------------------------------------------------------------------
  */
@@ -69,15 +77,16 @@ typedef struct {
 		UC_GetScan,			/*!< Get the scan configurations. */
 		UC_GetEngine,		/*!< Get the engine configurations. */
 		UC_EE,				/*!< Some magic feature. */
+		UC_Exit,			/*!< Exit the system */
 
 		/* User Command Error */
 		ErrUC_UnknownCommand,	/*!< A unknown command is received. */
 		ErrUC_TooFewArgs,	/*!< To few arguments in the command. */
 		ErrUC_FaultArgType,	/*!< One or more arguments were in the fault data type. */
 		ErrUC_ArgOutOfBounds,	/*!< One or more arguments were out of the allowed bounds. */
+		ErrUC_LineOverflow,	/*!< Command line overflow detected. */
 
 		/* System malfunctions */
-		Malf_LineOverflow,	/*!< Command line overflow detected. */
 		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
 		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
 		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
@@ -88,13 +97,15 @@ typedef struct {
 		/* User command parameters */
 		uint8_t echo;		/*!< Enable or disable the RS232 echo. */
 		uint8_t respmsg;	/*!< Enable or disable the response message. */
-		uint8_t sleep;		/*!< Ticks before the engine is suspended. */
+		uint16_t engine_sleep;/*!< Ticks before the engine is suspended. */
 		struct {
 			int16_t left;	/*!< Left azimuth boundary. */
 			int16_t right;	/*!< Right azimuth boundary. */
 		} azimuth_bndry;	/*!< Azimuth boundary. */
 		int16_t azimuth_step;	/*!< Azimuth step size. */
 		uint8_t scan_rate;	/*!< Update rate of the room map. */
+		/* User error code */
+		uint8_t error_level;	/*!< Level of the command error */
 		/* System malfunction parameters */
 		uint16_t gp22_stat;	/*!< State register of the GP22. */
 	} param;

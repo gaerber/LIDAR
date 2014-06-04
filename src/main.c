@@ -70,12 +70,17 @@ int main(void) {
 	/* Ensure all priority bits are assigned as preemption priority bits. */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-	/* Initialize all tasks */
+	/* Initialize the software timer task */
+	xTimerCreateTimerTask();
+
+	/* Initialize all application tasks */
 	taskCommInterpInit();
 	taskControllerInit();
 	taskGatekeeperInit();
 	taskScannerInit();
-	taskDataProcessingInit();
+	//taskDataProcessingInit();
+
+//	taskDataAcquisitionInit();
 
 	/* Start the scheduler */
 	vTaskStartScheduler();

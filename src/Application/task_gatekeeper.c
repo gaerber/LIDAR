@@ -99,7 +99,7 @@ void taskGatekeeper(void* pvParameters) {
 	for (;;) {
 		/* Get the message, which has to be sent */
 		if (xQueueReceive(queueMessage, &message, portMAX_DELAY) == pdTRUE) {
-			/* Gets the mutual exclusion to write into the circular buffer */
+			/* Takes the mutual exclusion to write into the circular buffer */
 			xSemaphoreTake(mutexTxCircBuf, portMAX_DELAY);
 
 			/* Send the message type selector */
