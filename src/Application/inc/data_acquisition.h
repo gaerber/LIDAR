@@ -1,5 +1,5 @@
 /**
- * \file		dataacquisition.h
+ * \file		data_acquisition.h
  * \brief		The data acquisition contains the azimuth and the distance.
  * \date		2014-05-29
  * \version		0.1
@@ -28,11 +28,14 @@
  * Configurations
  * ----------------------------------------------------------------------------
  */
-#define DA_AZIMUTH_MIN		330		/*!< Minimum azimuth [increments]. */
-#define DA_AZIMUTH_MAX		1660	/*!< Maximum azimuth [increments]. */
-#define DA_AZIMUTH_RES		10		/*!< Default azimuth steps [increments]. */
+#define DA_AZIMUTH_MIN		-1188	/*!< Minimum azimuth [tenth degree]. */
+#define DA_AZIMUTH_MAX		1188	/*!< Maximum azimuth [tenth degree]. */
+#define DA_AZIMUTH_RES		18		/*!< Default azimuth steps [tenth degree]. */
 #define DA_AZIMUTH_CAL_DIST	1		/*!< Azimuth at which the distance is calibrated. */
 #define DA_AZIMUTH_CAL_RES	(DA_AZIMUTH_MAX + 2 * DA_AZIMUTH_RES)	/*!< Azimuth at which the high speed clock is calibrated. */
+
+#define DA_DEF_SCANRATE		2		/*!< Default scan rate in scans per seconds. */
+#define DA_LASERPULSE		50		/*!< Number of laser pulse with 1 scan per second. */
 
 /*
  * ----------------------------------------------------------------------------

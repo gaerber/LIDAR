@@ -1,5 +1,5 @@
 /**
- * \file		dataacquisition.c
+ * \file		data_acquisition.c
  * \brief		The data acquisition contains the azimuth and the distance.
  * \date		2014-05-29
  * \version		0.1
@@ -118,7 +118,10 @@ void DataAcquisitionInit(void) {
 
 /**
  * \brief	Starts the data acquisition in the given scanning area.
- * \param[in]	atzimuth_left
+ * \param[in]	atzimuth_left Left azimuth of the scanning area.
+ * \param[in]	azimuth_right Right azimuth of the scanning area.
+ * \param[in]	azimuth_res Resolution between two measurement points.
+ * \param[in]	laser_pulses Number of laser pulses each measurement point.
  */
 void DataAcquisitionStart(uint32_t atzimuth_left, uint32_t azimuth_right,
 		uint32_t azimuth_res, uint32_t laser_pulses) {
@@ -272,7 +275,7 @@ void tdcPropagationDelayCalibrationHandler(void) {
 		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
 	}
 	else {
-		/** @Todo: Error handling */
+		/** @todo: Error handling */
 		//Direkt an Controller senden
 	}
 
@@ -359,7 +362,7 @@ void tdcMeasurementHandler(void) {
 			g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = 0x7FFFFFFF;
 		}
 		else {
-			/** @Todo: Error handling */
+			/** @todo: Error handling */
 		}
 	}
 
