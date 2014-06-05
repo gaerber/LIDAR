@@ -23,7 +23,7 @@
  * ----------------------------------------------------------------------------
  */
 #define TASK_GATEKEEPER_NAME		"Gatekeeper"				/*!< Task name. */
-#define TASK_GATEKEEPER_PRIORITY	2							/*!< Task Priority. */
+#define TASK_GATEKEEPER_PRIORITY	3							/*!< Task Priority. */
 #define TASK_GATEKEEPER_STACKSIZE	configMINIMAL_STACK_SIZE	/*!< Task Stack size. */
 
 

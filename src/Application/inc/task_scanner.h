@@ -24,7 +24,7 @@
  * ----------------------------------------------------------------------------
  */
 #define TASK_SCANNER_NAME			"Scanner"					/*!< Task name. */
-#define TASK_SCANNER_PRIORITY		2							/*!< Task priority. */
+#define TASK_SCANNER_PRIORITY		7							/*!< Task priority. */
 #define TASK_SCANNER_STACKSIZE		configMINIMAL_STACK_SIZE	/*!< Task stack size. */
 
 

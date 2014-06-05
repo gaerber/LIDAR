@@ -53,7 +53,7 @@ static const bsp_gpioconf_t BSP_SERIAL_TX = {
 #define BSP_SERIAL_PERIPH		RCC_APB1Periph_USART3	/*!< RCC AHB peripheral of the UART port */
 
 #define BSP_SERIAL_IRQ_CHANEL	USART3_IRQn			/*!< NVIC UART interrupt */
-#define BSP_SERIAL_IRQ_PRIORITY	0					/*!< NVIC UART interrupt priority */
+#define BSP_SERIAL_IRQ_PRIORITY	3					/*!< NVIC UART interrupt priority */
 #define BSP_SERIAL_IRQ_Handler	USART3_IRQHandler	/*!< NVIC interrupt handler */
 
 /* UART settings */

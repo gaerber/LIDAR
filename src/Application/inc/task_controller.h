@@ -24,7 +24,7 @@
  * ----------------------------------------------------------------------------
  */
 #define TASK_CONTROLLER_NAME		"Controller"				/*!< Task name. */
-#define TASK_CONTROLLER_PRIORITY	2							/*!< Task Priority. */
+#define TASK_CONTROLLER_PRIORITY	6							/*!< Task Priority. */
 #define TASK_CONTROLLER_STACKSIZE	configMINIMAL_STACK_SIZE	/*!< Task Stack size. */
 
 

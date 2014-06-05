@@ -25,7 +25,7 @@
  * ----------------------------------------------------------------------------
  */
 #define TASK_COMMINTERP_NAME		"Comm. Interp."				/*!< Task name. */
-#define TASK_COMMINTERP_PRIORITY	2							/*!< Task Priority. */
+#define TASK_COMMINTERP_PRIORITY	1							/*!< Task Priority. */
 #define TASK_COMMINTERP_STACKSIZE	configMINIMAL_STACK_SIZE	/*!< Task Stack size. */
 
 
