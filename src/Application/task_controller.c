@@ -35,6 +35,7 @@
 #include "bsp_quadenc.h"
 #include "bsp_laser.h"
 
+/* Imported function prototypes */
 extern void Reset_Handler(void);
 extern int sprintf(char* str, const char *fmt, ...);
 
@@ -217,7 +218,7 @@ void taskControllerInit(void) {
 	bsp_LedInit();
 
 	/* Initialize the data acquisition */
-	//DataAcquisitionInit();
+	DataAcquisitionInit();
 
 	/* Generate the task */
 	xTaskCreate(taskController, TASK_CONTROLLER_NAME, TASK_CONTROLLER_STACKSIZE,

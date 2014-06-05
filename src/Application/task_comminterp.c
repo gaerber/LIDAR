@@ -84,7 +84,8 @@ QueueHandle_t queueReadCommand;
  */
 void taskCommInterpInit(void) {
 
-	/* No hardware initialization needed */
+	/* Initialize the serial interface */
+	bsp_SerialInit();
 
 	/* Generate the task */
 	xTaskCreate(taskCommInterp, TASK_COMMINTERP_NAME, TASK_COMMINTERP_STACKSIZE,

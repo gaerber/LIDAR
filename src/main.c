@@ -80,7 +80,7 @@ int main(void) {
 	taskControllerInit();
 	taskGatekeeperInit();
 	taskScannerInit();
-	//taskDataProcessingInit();
+	taskDataProcessingInit();
 
 //	taskDataAcquisitionInit();
 

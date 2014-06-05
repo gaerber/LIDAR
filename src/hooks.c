@@ -61,7 +61,9 @@ void vApplicationTickHook(void)   {
  */
 //#if ((configUSE_MALLOC_FAILED_HOOK == 1) || (configCHECK_FOR_STACK_OVERFLOW == 2))
 void vApplicationStackOverflowHook(TaskHandle_t *pxTask, signed portCHAR *pcTaskName) {
+	for (;;) {
 
+	}
 }
 //#endif
 
@@ -74,6 +76,8 @@ void vApplicationStackOverflowHook(TaskHandle_t *pxTask, signed portCHAR *pcTask
  */
 //#if (configUSE_MALLOC_FAILED_HOOK == 1)
 void vApplicationMallocFailedHook(void) {
+	for (;;) {
 
+	}
 }
 //#endif
