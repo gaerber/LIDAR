@@ -33,7 +33,7 @@
  * ----------------------------------------------------------------------------
  */
 #define Q_MESSAGE_LENGTH			10		/*!< Queue length of the messages. */
-#define MESSAGE_STRING_LENGTH		24		/*!< Maximal length of each message. */
+#define MESSAGE_STRING_LENGTH		40		/*!< Maximal length of each message. */
 
 
 /*
