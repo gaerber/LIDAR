@@ -90,15 +90,15 @@ void triggerMalfunctionLed(void);
  * \brief
  */
 int16_t increments2tenthdegree(uint32_t increments) {
-	return round(3600 / BSP_QUADENC_INC_PER_TURN * increments - 1800);
+	return round(3600.0 / BSP_QUADENC_INC_PER_TURN * increments - 1800);
 }
 
 uint32_t tenthdegree2increments(int16_t tenthdegree) {
-	return round((tenthdegree + 1800) / 3600 * BSP_QUADENC_INC_PER_TURN);
+	return round((tenthdegree + 1800) / 3600.0 * BSP_QUADENC_INC_PER_TURN);
 }
 
 uint32_t tenthdegree2increments_Relative(int16_t tenthdegree) {
-	return round(tenthdegree / 3600 * BSP_QUADENC_INC_PER_TURN);
+	return round(tenthdegree / 3600.0 * BSP_QUADENC_INC_PER_TURN);
 }
 
 
@@ -215,7 +215,7 @@ void systemCheckCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-	bsp_LedInit();
+//	bsp_LedInit();
 
 	/* Initialize the data acquisition */
 	DataAcquisitionInit();
@@ -251,6 +251,10 @@ void taskController(void* pvParameters) {
 
 	/* initialize the system */
 	command.command = Sys_Init;
+	xQueueSend(queueCommand, &command, portMAX_DELAY);
+
+	//DEMO
+	command.command = UC_Data;
 	xQueueSend(queueCommand, &command, portMAX_DELAY);
 
 	/* Loop forever */

@@ -32,6 +32,8 @@
 #include "bsp_gp22.h"
 #include "bsp_quadenc.h"
 
+uint32_t tenthdegree2increments(int16_t tenthdegree);
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -137,7 +139,7 @@ void DataAcquisitionStart(uint32_t atzimuth_left, uint32_t azimuth_right,
 	/* Starts the data acquisition with a calibration measurement of the
 	 * high speed clock from the TDC */
 	bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
-	bsp_QuadencSetCapture(DA_AZIMUTH_CAL_RES);
+	bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 }
 
 /**
@@ -165,7 +167,7 @@ void azimuthTDCCalibrationHandler(uint32_t azimuth) {
 	if (g_settings.enable) {
 		/* Configure the next step: Propagation delay calibration */
 		bsp_QuadencPosCallback(azimuthPDCalibrationHandler);
-		bsp_QuadencSetCapture(DA_AZIMUTH_CAL_DIST);
+		bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_DIST));
 
 #if (BSP_GP22_REG0 & (1<<13))
 		/* Disable the automatic calibration calculation on the TDC */
@@ -309,7 +311,7 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 		else {
 			/* Scan completed -> restart with calibration */
 			bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
-			bsp_QuadencSetCapture(DA_AZIMUTH_CAL_RES);
+			bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 		}
 
 		/* Get a memory block for the raw data */
