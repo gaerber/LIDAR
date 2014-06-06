@@ -107,11 +107,7 @@ void DataAcquisitionInit(void) {
 	/* Initialize the quadrature encoder */
 	bsp_QuadencInit();
 
-	/* Set the default settings */
-	g_settings.azimuth_left = DA_AZIMUTH_MIN;
-	g_settings.azimuth_right = DA_AZIMUTH_MAX;
-	g_settings.azimuth_res = DA_AZIMUTH_RES;
-	g_settings.laser_pulses = 25;
+	/* Disable the data acquisition */
 	g_settings.enable = 0;
 
 	g_rawDataPtr = NULL;
@@ -273,8 +269,8 @@ void tdcPropagationDelayCalibrationHandler(void) {
 	if ((result & 0xF8) == 0x48) {
 		/* Read the calibration value */
 		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
-		/* Safe the raw data */
-		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
+//		/* Safe the raw data */
+//		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
 	}
 	else {
 		/** @todo: Error handling */
@@ -360,8 +356,8 @@ void tdcMeasurementHandler(void) {
 	else {
 		/* Check if no reflection is detected */
 		if ((result & 0xF8) == 0x08) {
-			/* set the raw date to endless (maximum value) */
-			g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = 0x7FFFFFFF;
+//			/* set the raw date to endless (maximum value) */
+//			g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = 0x7FFFFFFF;
 		}
 		else {
 			/** @todo: Error handling */

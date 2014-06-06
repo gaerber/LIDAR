@@ -279,7 +279,7 @@ void taskController(void* pvParameters) {
 				g_systemState.readcommand = 1;
 				g_systemState.atzimuth_left = tenthdegree2increments(DA_AZIMUTH_MIN);
 				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
-				g_systemState.azimuth_res = tenthdegree2increments(DA_AZIMUTH_RES);
+				g_systemState.azimuth_res = tenthdegree2increments_Relative(DA_AZIMUTH_RES);
 				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
 				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (DA_DEF_SCANRATE /* * REGLER_ZEITKONSTANTE_TA */);
 
