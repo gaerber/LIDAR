@@ -202,7 +202,7 @@ void systemCheckCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-//	bsp_LedInit();
+	bsp_LedInit();
 
 	/* Initialize the data acquisition */
 	DataAcquisitionInit();
