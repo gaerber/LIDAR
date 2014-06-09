@@ -101,39 +101,56 @@ void taskScanner(void* pvParameters) {
 
 	/* Loop forever */
 	for (;;) {
-		/* Wait for the next cycle */
-		vTaskDelayUntil(&xLastWakeTime, ENGINE_CONTROLER_TA);
+		/* Wait until the engine has to start */
+		xQueueReceive(queueSpeed, &set_point, portMAX_DELAY);
 
-		/* Get the current azimuth */
-		bsp_QuadencGet(&current_azimuth);
+		/* Enable the engine */
+		bsp_EngineSpeed(0);
+		bsp_EngineEnalble();
 
-		/* Calculate the current speed */
-		process_variable = current_azimuth - last_azimuth;
-		if (process_variable < 0) {
-			process_variable += BSP_QUADENC_INC_PER_TURN;
-		}
+		/* Controller circuit of the engine */
+		while (set_point != 0) {
+			/* Wait for the next cycle */
+			vTaskDelayUntil(&xLastWakeTime, ENGINE_CONTROLER_TA);
 
-		/* Calculate the difference */
-		e = set_point - process_variable;
+			/* Get the current azimuth */
+			bsp_QuadencGet(&current_azimuth);
 
-		/* Anti windup circuit */
-		if (controlling_element < BSP_ENGINE_PWM_PERIOD && controlling_element > -1 * BSP_ENGINE_PWM_PERIOD) {
-			e_sum = e_sum + e;
-		} /* In case of assessed controlling element -> integrator freeze */
+			/* Get the new set point value if there is one */
+			xQueueReceive(queueSpeed, &set_point, 0);
 
-		/* PI controller */
-		controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
+			/* Calculate the current speed */
+			process_variable = current_azimuth - last_azimuth;
+			if (process_variable < 0) {
+				process_variable += BSP_QUADENC_INC_PER_TURN;
+			}
 
-		/* Limit the controlling element */
-		if (controlling_element > BSP_ENGINE_PWM_PERIOD) {
-			controlling_element = BSP_ENGINE_PWM_PERIOD;
-		}
-		if (controlling_element < -1 * BSP_ENGINE_PWM_PERIOD) {
-			controlling_element = -1 * BSP_ENGINE_PWM_PERIOD;
-		}
+			/* Calculate the difference */
+			e = set_point - process_variable;
 
-		/* Sets the new controlling element */
-		bsp_EngineSpeed(controlling_element);
+			/* Anti windup circuit */
+			if (controlling_element < BSP_ENGINE_PWM_PERIOD && controlling_element > -1 * BSP_ENGINE_PWM_PERIOD) {
+				e_sum = e_sum + e;
+			} /* In case of assessed controlling element -> integrator freeze */
+
+			/* PI controller */
+			controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
+
+			/* Limit the controlling element */
+			if (controlling_element > BSP_ENGINE_PWM_PERIOD) {
+				controlling_element = BSP_ENGINE_PWM_PERIOD;
+			}
+			if (controlling_element < -1 * BSP_ENGINE_PWM_PERIOD) {
+				controlling_element = -1 * BSP_ENGINE_PWM_PERIOD;
+			}
+
+			/* Sets the new controlling element */
+			bsp_EngineSpeed(controlling_element);
+		} /* End of controller loop */
+
+		/* Suspend the engine */
+		bsp_EngineSpeed(0);
+		bsp_EngineDisable();
 	}
 
 	/* Never reach this point */
