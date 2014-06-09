@@ -36,6 +36,15 @@
 #define Q_RAWDATA_LENGTH			30			/*!< Memory pool and queue length of the raw data. */
 #define MAX_RAWDATA_LENGTH			25			/*!< Maximum measurement points each point of the room map. */
 
+
+/*
+ * ----------------------------------------------------------------------------
+ * Application settings
+ * ----------------------------------------------------------------------------
+ */
+#define VERILOG_OF_LIGHT			299792458	/*!< Verilog of the light [m/s]. Source: Wikipedia */
+
+
 /*
  * ----------------------------------------------------------------------------
  * Type declarations
