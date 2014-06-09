@@ -67,7 +67,7 @@ typedef struct {
 		MODE_DATA				/*!< Mode DATA. */
 	} state;					/*!< System mode. */
 	readcommand_t readcommand;	/*!< The read command value for the command interpreter task. */
-	uint32_t atzimuth_left;		/*!< Calculated scan area boundary left. [increments] */
+	uint32_t azimuth_left;		/*!< Calculated scan area boundary left. [increments] */
 	uint32_t azimuth_right;		/*!< Calculated scan area boundary right. [increments] */
 	uint32_t azimuth_res;		/*!< Calculated step size between two measurement points. [increments] */
 	uint32_t laser_pulses;		/*!< Number of laser pulses each measurement point. */
@@ -264,7 +264,7 @@ void taskController(void* pvParameters) {
 				g_systemState.engine_sleep = 0;
 				g_systemState.state = MODE_CMD;
 				g_systemState.readcommand = 1;
-				g_systemState.atzimuth_left = tenthdegree2increments(DA_AZIMUTH_MIN);
+				g_systemState.azimuth_left = tenthdegree2increments(DA_AZIMUTH_MIN);
 				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
 				g_systemState.azimuth_res = tenthdegree2increments_Relative(DA_AZIMUTH_RES);
 				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
@@ -291,7 +291,7 @@ void taskController(void* pvParameters) {
 				/* Stop the data acquisition */
 				DataAcquisitionStop();
 
-				/* todo: Stop the engine after a given time delay */
+				/* Stop the engine after a given time delay */
 				if (g_systemState.engine_sleep > 0) {
 					xTimerChangePeriod(timerEngineSleep, g_systemState.engine_sleep, portMAX_DELAY);
 					xTimerStart(timerEngineSleep, portMAX_DELAY);
@@ -326,8 +326,9 @@ void taskController(void* pvParameters) {
 				/* Send the response message */
 				sendMessage(MSG_TYPE_STATE, "data");
 
+				/* todo Waits until the engine reached his speed. */
 				/* Starts the data acquisition */
-				DataAcquisitionStart(g_systemState.atzimuth_left, g_systemState.azimuth_right,
+				DataAcquisitionStart(g_systemState.azimuth_left, g_systemState.azimuth_right,
 						g_systemState.azimuth_res, g_systemState.laser_pulses);
 
 				/* Read the next user command */
@@ -374,9 +375,19 @@ void taskController(void* pvParameters) {
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
-			/* todo: Configure the scan area boundary */
+			/* Configure the scan area boundary */
 			case UC_SetScanBndry:
+				/* Change the system state */
+				g_systemState.scan_bndry_left = command.param.azimuth_bndry.left;
+				g_systemState.scan_bndry_right = command.param.azimuth_bndry.right;
+				g_systemState.azimuth_left = tenthdegree2increments(command.param.azimuth_bndry.left);
+				g_systemState.azimuth_right = tenthdegree2increments(command.param.azimuth_bndry.right);
 
+				/* Send the acknowledge to the user */
+				sendMessage(MSG_TYPE_RSP, "00 aok");
+
+				/* Read the next user command */
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Configure the step size between two measurement points */
