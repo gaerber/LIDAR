@@ -32,7 +32,8 @@
 #include "bsp_gp22.h"
 #include "bsp_quadenc.h"
 
-uint32_t tenthdegree2increments(int16_t tenthdegree);
+/* Utility */
+#include "incs_azimuth.h"
 
 
 /*

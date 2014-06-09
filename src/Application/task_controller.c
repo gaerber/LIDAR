@@ -14,7 +14,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
 
 /* RTOS */
 #include "FreeRTOS.h"
@@ -34,6 +33,9 @@
 #include "bsp_led.h"
 #include "bsp_quadenc.h"
 #include "bsp_laser.h"
+
+/* Utility */
+#include "incs_azimuth.h"
 
 /* Imported function prototypes */
 extern void Reset_Handler(void);
@@ -85,21 +87,6 @@ void systemCheckCallback(TimerHandle_t xTimer);
 void taskController(void* pvParameters);
 void sendMessage(char msg_typw, const char* msg);
 void triggerMalfunctionLed(void);
-
-/**
- * \brief
- */
-int16_t increments2tenthdegree(uint32_t increments) {
-	return round(3600.0 / BSP_QUADENC_INC_PER_TURN * increments - 1800);
-}
-
-uint32_t tenthdegree2increments(int16_t tenthdegree) {
-	return round((tenthdegree + 1800) / 3600.0 * BSP_QUADENC_INC_PER_TURN);
-}
-
-uint32_t tenthdegree2increments_Relative(int16_t tenthdegree) {
-	return round(tenthdegree / 3600.0 * BSP_QUADENC_INC_PER_TURN);
-}
 
 
 /*
