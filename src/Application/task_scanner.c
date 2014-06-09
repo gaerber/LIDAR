@@ -84,7 +84,7 @@ void taskScannerInit(void) {
 void taskScanner(void* pvParameters) {
 	TickType_t xLastWakeTime;
 
-	uint32_t current_azimuth;
+	uint32_t current_azimuth = 0;
 	uint32_t last_azimuth = 0;
 
 	int32_t set_point = 1000;

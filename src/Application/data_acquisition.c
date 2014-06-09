@@ -222,7 +222,7 @@ void tdcHighSpeedCalibrationHandler(void) {
  * \param[in]	azimuth is the current azimuth, which called the interrupt.
  */
 void azimuthPDCalibrationHandler(uint32_t azimuth) {
-//	portBASE_TYPE xTaskWoken = pdFALSE;
+//	BaseType_t xTaskWoken = pdFALSE;
 
 	/* Check if it is enabled */
 	if (g_settings.enable) {
@@ -254,7 +254,7 @@ void azimuthPDCalibrationHandler(uint32_t azimuth) {
 	}
 
 //	/* Check if a higher prior task is woken up */
-//    portEND_SWITCHING_ISR(xTaskWoken);
+//	portEND_SWITCHING_ISR(xTaskWoken);
 }
 
 /**

@@ -70,7 +70,7 @@ static const bsp_gpioconf_t BSP_QUADENC_INCB = {
  * \brief	Quadrature input channel I (index).
  */
 static const bsp_gpioconf_t BSP_QUADENC_INCI = {
-		RCC_AHB1Periph_GPIOE, GPIOE, GPIO_Pin_2, GPIO_Mode_IN, GPIO_PuPd_NOPULL
+		RCC_AHB1Periph_GPIOE, GPIOE, GPIO_Pin_13, GPIO_Mode_IN, GPIO_PuPd_NOPULL
 };
 
 #define BSP_QUADENC_TIMER			TIM1					/*!< Port base address of the timer port */
@@ -83,9 +83,9 @@ static const bsp_gpioconf_t BSP_QUADENC_INCI = {
 #define BSP_QUADENC_POS_IRQ_PRIORITY	6					/*!< NVIC timer interrupt priority */
 #define BSP_QUADENC_POS_IRQ_Handler		TIM1_CC_IRQHandler	/*!< NVIC timer handler */
 
-#define BSP_QUADENC_I_IRQ_CHANEL		EXTI2_IRQn			/*!< NVIC GPIO interrupt */
+#define BSP_QUADENC_I_IRQ_CHANEL		EXTI15_10_IRQn		/*!< NVIC GPIO interrupt */
 #define BSP_QUADENC_I_IRQ_PRIORITY		5					/*!< NVIC GPIO interrupt priority */
-#define BSP_QUADENC_I_IRQ_Handler		EXTI2_IRQHandler	/*!< NVIC GPIO handler */
+#define BSP_QUADENC_I_IRQ_Handler		EXTI15_10_IRQHandler/*!< NVIC GPIO handler */
 
 
 /*
