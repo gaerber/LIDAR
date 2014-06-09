@@ -26,6 +26,7 @@
 /* Application */
 #include "data_acquisition.h"
 #include "task_dataprocessing.h"
+#include "task_controller.h"
 
 /* BSP */
 #include "bsp_laser.h"
@@ -99,11 +100,15 @@ uint32_t g_rawCalibrationData;
  * \brief	Initialize and configure the hardware for the data acquisition.
  */
 void DataAcquisitionInit(void) {
+	uint32_t temp;
+
 	/* Initialize the laser pulse generator */
 	bsp_LaserInit();
 
 	/* Initialize the TDC-GP22 */
 	bsp_GP22Init();
+
+	bsp_GP22RegRead(GP22_RD_IDBIT, &temp, 4);
 
 	/* Initialize the quadrature encoder */
 	bsp_QuadencInit();
@@ -144,6 +149,29 @@ void DataAcquisitionStart(uint32_t atzimuth_left, uint32_t azimuth_right,
  */
 void DataAcquisitionStop(void) {
 	g_settings.enable = 0;
+}
+
+
+/*
+ * ----------------------------------------------------------------------------
+ * Hook functions
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * \brief	Quadrature encoder hook function. It is called after a increment
+ * 			failure from a ISR function.
+ */
+void bsp_QuadencRoterrorHook(void) {
+	command_t command;
+	BaseType_t xTaskWoken = pdFALSE;
+
+	/* Sends the failure to the controller */
+	command.command = Malf_QuadEnc;
+	xQueueSendFromISR(queueCommand, &command, &xTaskWoken);
+
+	/* Check if a higher prior task is woken up */
+	portEND_SWITCHING_ISR(xTaskWoken);
 }
 
 
