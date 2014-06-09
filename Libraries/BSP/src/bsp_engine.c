@@ -46,7 +46,7 @@ void bsp_EngineInit(void) {
 	bsp_GpioInit(&BSP_ENGINE_PWM_PORT);
 
 	/* Engine in standby mode */
-	GPIO_SetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
+	GPIO_ResetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
 
 	/* Sets the engine rotation clockwise as default */
 	bsp_EngineDirection(BSP_ENGINE_CW);
@@ -111,7 +111,7 @@ void bsp_EngineEnalble(void) {
 	TIM_Cmd(BSP_ENGINE_TIMER_PORT_BASE, ENABLE);
 
 	/* Engine out of standby mode */
-	GPIO_ResetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
+	GPIO_SetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
 }
 
 /**
@@ -119,7 +119,7 @@ void bsp_EngineEnalble(void) {
  */
 void bsp_EngineDisable(void) {
 	/* Engine in standby mode */
-	GPIO_SetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
+	GPIO_ResetBits(BSP_ENGINE_STANDBY_PORT.base, BSP_ENGINE_STANDBY_PORT.pin);
 
 	/* Disable PWM counter */
 	TIM_Cmd(BSP_ENGINE_TIMER_PORT_BASE, DISABLE);
