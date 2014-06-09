@@ -34,6 +34,8 @@
  */
 #define Q_MESSAGE_LENGTH			10		/*!< Queue length of the messages. */
 #define MESSAGE_STRING_LENGTH		40		/*!< Maximal length of each message. */
+#define Q_MESSAGE_DATA_LENGTH		40		/*!< Queue length of the data messages. */
+#define DATA_MESSAGE_STRING_LENGTH	4		/*!< Number of characters each data message. */
 
 
 /*
@@ -75,6 +77,8 @@ typedef struct {
  */
 extern TaskHandle_t taskGatekeeperHandle;
 extern QueueHandle_t queueMessage;
+extern QueueHandle_t queueMessageData;
+extern QueueSetHandle_t queueMessageSet;
 extern SemaphoreHandle_t mutexTxCircBuf;
 
 

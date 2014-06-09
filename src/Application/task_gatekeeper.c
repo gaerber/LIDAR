@@ -47,9 +47,19 @@ void taskGatekeeper(void* pvParameters);
 TaskHandle_t taskGatekeeperHandle;
 
 /**
- * \brief	Message queue. All message goes over this queue to the user.
+ * \brief	Message queue. All normal message goes over this queue to the user.
  */
 QueueHandle_t queueMessage;
+
+/**
+ * \brief	Data message queue with the information about the room map.
+ */
+QueueHandle_t queueMessageData;
+
+/**
+ * \brief	Queue set to trigger a message.
+ */
+QueueSetHandle_t queueMessageSet;
 
 /**
  * \brief	Mutual exclusion to get access to the transmission circular buffer.
@@ -78,6 +88,12 @@ void taskGatekeeperInit(void) {
 
 	/* Generate the queue */
 	queueMessage = xQueueCreate(Q_MESSAGE_LENGTH, sizeof(message_t));
+	queueMessageData = xQueueCreate(Q_MESSAGE_DATA_LENGTH, sizeof(char[DATA_MESSAGE_STRING_LENGTH]));
+
+	/* Create the message queue set */
+	queueMessageSet = xQueueCreateSet(Q_MESSAGE_LENGTH + Q_MESSAGE_DATA_LENGTH);
+	xQueueAddToSet(queueMessage, queueMessageSet);
+	xQueueAddToSet(queueMessageData, queueMessageSet);
 
 	/* Generate the mutual exclusion */
 	mutexTxCircBuf = xSemaphoreCreateMutex();
@@ -90,27 +106,50 @@ void taskGatekeeperInit(void) {
  * \param[in]	pvParameters task parameters. Not used.
  */
 void taskGatekeeper(void* pvParameters) {
+	QueueSetMemberHandle_t xActivatedMember;
+
 	message_t message;
+	char message_data[DATA_MESSAGE_STRING_LENGTH + 1] = { '\0' };
 	char *ptr;
 
+	char selector;
 	uint32_t i;
 	static const char frame_end[] = MSG_FRAME_END;
 
 	/* Loop forever */
 	for (;;) {
 		/* Get the message, which has to be sent */
-		if (xQueueReceive(queueMessage, &message, portMAX_DELAY) == pdTRUE) {
+		xActivatedMember = xQueueSelectFromSet(queueMessageSet, portMAX_DELAY);
+
+		/* Check the type of the message */
+		if (xActivatedMember == queueMessageData) {
+			/* A data message */
+			selector = MSG_TYPE_DATA;
+			xQueueReceive(queueMessageData, message_data, 0);
+			ptr = message_data;
+		}
+		else if (xActivatedMember == queueMessage) {
+			/* A normal message */
+			selector = message.type;
+			xQueueReceive(queueMessage, &message, 0);
+			ptr = message.msg;
+		}
+		else {
+			/* Error event */
+			xActivatedMember = NULL;
+		}
+
+		if (xActivatedMember) {
 			/* Takes the mutual exclusion to write into the circular buffer */
 			xSemaphoreTake(mutexTxCircBuf, portMAX_DELAY);
 
 			/* Send the message type selector */
-			while (!bsp_SerialCharPut(message.type)) {
+			while (!bsp_SerialCharPut(selector)) {
 				/* No space available in the circular buffer */
 				vTaskDelay(10/portTICK_PERIOD_MS);
 			}
 
 			/* Send the string to the TX output buffer */
-			ptr = message.msg;
 			while (*ptr != '\0') {
 				while (!bsp_SerialCharPut(*ptr++)) {
 					/* No space available in the circular buffer */
