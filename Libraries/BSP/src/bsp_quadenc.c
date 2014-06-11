@@ -104,6 +104,8 @@ void bsp_QuadencInit(void) {
 	EXTI_InitTypeDef EXTI_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 
+	TIM_DeInit(BSP_QUADENC_TIMER);
+
 	/* Initialize all GPIOs in their function */
 	bsp_GpioInit(&BSP_QUADENC_INCA);
 	bsp_GpioInit(&BSP_QUADENC_INCB);
@@ -136,7 +138,7 @@ void bsp_QuadencInit(void) {
 	TIM_OCInitStructure.TIM_Pulse = 0xFFFF;
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	/* Check the caption compare channel */
-	switch (BSP_QUADENC_POS_CHANEL) {
+	switch (BSP_QUADENC_POS_CHANNEL) {
 	case CHANNEL1:
 		/* PWM Mode configuration: Channel1 */
 		TIM_OC1Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
@@ -200,6 +202,9 @@ void bsp_QuadencInit(void) {
 
 	/* Enable timer */
 	TIM_Cmd(BSP_QUADENC_TIMER, ENABLE);
+
+	//DEMO
+	g_calibration = 1;
 }
 
 /**
@@ -224,7 +229,7 @@ uint8_t bsp_QuadencGet(uint32_t *azimuth) {
  */
 void bsp_QuadencSetCapture(uint32_t azimuth) {
 	/* Check the caption compare channel */
-	switch (BSP_QUADENC_POS_CHANEL) {
+	switch (BSP_QUADENC_POS_CHANNEL) {
 	case CHANNEL1:
 		/* Set caption compare register: Channel 1 */
 		TIM_SetCompare1(BSP_QUADENC_TIMER, azimuth);

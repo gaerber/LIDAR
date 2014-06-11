@@ -270,8 +270,10 @@ void taskController(void* pvParameters) {
 				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
 				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (DA_DEF_SCANRATE /* * REGLER_ZEITKONSTANTE_TA */);
 
+				g_systemState.engine_speed = 10;
+
 				/* Reads the first user command */
-				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+				//todo xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Make a system check */

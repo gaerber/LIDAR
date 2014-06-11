@@ -75,7 +75,7 @@ static const bsp_gpioconf_t BSP_QUADENC_INCI = {
 
 #define BSP_QUADENC_TIMER			TIM1					/*!< Port base address of the timer port */
 #define BSP_QUADENC_TIMER_PERIPH	RCC_APB2Periph_TIM1		/*!< RCC AHB peripheral of the timer port */
-#define BSP_QUADENC_POS_CHANEL		CHANNEL3					/*!< Capture compare channel to generate the position interrupt */
+#define BSP_QUADENC_POS_CHANNEL		CHANNEL3					/*!< Capture compare channel to generate the position interrupt */
 
 /* Interrupt settings */
 #define BSP_QUADENC_POS_IRQ_CHANEL		TIM1_CC_IRQn		/*!< NVIC timer interrupt (capture compare) */
