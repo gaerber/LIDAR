@@ -41,8 +41,8 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define ENGINE_CONTROLER_KP			100		/*!< Proportional gain. */
-#define ENGINE_CONTROLER_KI			20		/*!< Integral gain. */
+#define ENGINE_CONTROLER_KP			0.3		/*!< Proportional gain. */
+#define ENGINE_CONTROLER_KI			5		/*!< Integral gain. */
 #define ENGINE_CONTROLER_TA			1		/*!< Time interval. */
 
 

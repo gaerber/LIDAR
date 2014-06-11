@@ -124,6 +124,7 @@ void taskScanner(void* pvParameters) {
 			if (process_variable < 0) {
 				process_variable += BSP_QUADENC_INC_PER_TURN;
 			}
+			last_azimuth = current_azimuth;
 
 			/* Calculate the difference */
 			e = set_point - process_variable;
@@ -137,11 +138,11 @@ void taskScanner(void* pvParameters) {
 			controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
 
 			/* Limit the controlling element */
-			if (controlling_element > BSP_ENGINE_PWM_PERIOD) {
-				controlling_element = BSP_ENGINE_PWM_PERIOD;
+			if (controlling_element >= BSP_ENGINE_PWM_PERIOD) {
+				controlling_element = BSP_ENGINE_PWM_PERIOD - 1;
 			}
-			if (controlling_element < -1 * BSP_ENGINE_PWM_PERIOD) {
-				controlling_element = -1 * BSP_ENGINE_PWM_PERIOD;
+			if (controlling_element <= (-1 * BSP_ENGINE_PWM_PERIOD)) {
+				controlling_element = -1 * (BSP_ENGINE_PWM_PERIOD - 1);
 			}
 
 			/* Sets the new controlling element */
