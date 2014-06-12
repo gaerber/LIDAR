@@ -39,7 +39,6 @@
  * ----------------------------------------------------------------------------
  */
 void taskDataProcessing(void* pvParameters);
-inline void dataEncode(int16_t azimuth, int16_t distance, char *base64);
 
 
 /*
