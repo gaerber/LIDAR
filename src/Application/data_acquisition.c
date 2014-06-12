@@ -186,41 +186,41 @@ void bsp_QuadencRoterrorHook(void) {
  * \param[in]	azimuth is the current azimuth, which called the interrupt.
  */
 void azimuthTDCCalibrationHandler(uint32_t azimuth) {
-	uint32_t reg;
-
-	/* Check if it is enabled */
-	if (g_settings.enable) {
+//	uint32_t reg;
+//
+//	/* Check if it is enabled */
+//	if (g_settings.enable) {
 		/* Configure the next step: Propagation delay calibration */
 		bsp_QuadencPosCallback(azimuthMeasurementHandler);
 		bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_DIST));
-
-#if (BSP_GP22_REG0 & (1<<13))
-		/* Disable the automatic calibration calculation on the TDC */
-		reg = BSP_GP22_REG0 & (~(1<<13));
-		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
-#endif
-
-#if (BSP_GP22_REG1 & (1<<23))
-		/* Disable the fast init feature */
-		reg = BSP_GP22_REG1 & (~(1<<23));
-		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
-#endif
-
-#if (!((BSP_GP22_REG2 & (1<<31)) && (BSP_GP22_REG2 & (1<<29))))
-		/* Set the TDC interrupt source to TDC timeout and ALU interrupt */
-		reg = BSP_GP22_REG2 | (1<<31) | (1<<29);
-		bsp_GP22RegWrite(GP22_WR_REG_2, reg);
-#endif
-
-		/* Starts a calibration measurement for the high speed clock */
-		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
-		bsp_GP22SendOpcode(GP22_OP_Init);
-		bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
-	}
-	else {
-		/* Data acquisition disable */
-		bsp_QuadencPosCallback(NULL);
-	}
+//
+//#if (BSP_GP22_REG0 & (1<<13))
+//		/* Disable the automatic calibration calculation on the TDC */
+//		reg = BSP_GP22_REG0 & (~(1<<13));
+//		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
+//#endif
+//
+//#if (BSP_GP22_REG1 & (1<<23))
+//		/* Disable the fast init feature */
+//		reg = BSP_GP22_REG1 & (~(1<<23));
+//		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
+//#endif
+//
+//#if (!((BSP_GP22_REG2 & (1<<31)) && (BSP_GP22_REG2 & (1<<29))))
+//		/* Set the TDC interrupt source to TDC timeout and ALU interrupt */
+//		reg = BSP_GP22_REG2 | (1<<31) | (1<<29);
+//		bsp_GP22RegWrite(GP22_WR_REG_2, reg);
+//#endif
+//
+//		/* Starts a calibration measurement for the high speed clock */
+//		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
+//		bsp_GP22SendOpcode(GP22_OP_Init);
+//		bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
+//	}
+//	else {
+//		/* Data acquisition disable */
+//		bsp_QuadencPosCallback(NULL);
+//	}
 }
 
 /**
@@ -315,10 +315,16 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 void tdcMeasurementHandler(void) {
 	uint32_t result;
 
-	/* Read the calibration value */
-	bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
-	/* Safe the raw data */
-	g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
+	/* Check the pointer */
+	if (g_rawDataPtr != NULL) {
+		/* Read the calibration value */
+		bsp_GP22RegRead(GP22_RD_RES_0, &result, 4);
+		/* Safe the raw data */
+		g_rawDataPtr->raw[g_rawDataPtr->raw_ctr++] = result;
+	}
+	else {
+		/* todo error handling */
+	}
 }
 
 /**
@@ -330,29 +336,32 @@ void laserEndSequenceHandler(void) {
 	command_t error_command;
 	BaseType_t xTaskWoken = pdFALSE;
 
-	/* Check the received numbers */
-	if (g_rawDataPtr->raw_ctr < g_settings.laser_pulses) {
-		/* Not all pulses were successfully -> control sample */
-		bsp_GP22RegRead(GP22_RD_STAT, &stat, 2);
-		/* Stat is 0x00 if the last sample was successful */
-		if (!(stat == 0x0000 || (stat&0xFFF8) == 0x0208)) {
-			/* Error occurs */
-			error_command.command = Malf_Tdc;
-			error_command.param.gp22_stat = stat;
-			xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+	/* Check the pointer */
+	if (g_rawDataPtr != NULL) {
+		/* Check the received numbers */
+		if (g_rawDataPtr->raw_ctr < g_settings.laser_pulses) {
+			/* Not all pulses were successfully -> control sample */
+			bsp_GP22RegRead(GP22_RD_STAT, &stat, 2);
+			/* Stat is 0x00 if the last sample was successful */
+			if (!(stat == 0x0000 || (stat&0xFFF8) == 0x0208)) {
+				/* Error occurs */
+				error_command.command = Malf_Tdc;
+				error_command.param.gp22_stat = stat;
+				xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+			}
 		}
-	}
 
-	/* Send the raw data pointer to the data processing task */
-	if (xQueueSendFromISR(queueRawDataPtr, &g_rawDataPtr, &xTaskWoken) == pdTRUE) {
-		/* Reset pointer */
-		g_rawDataPtr = NULL;
-	}
-	else {
-		/* todo error code */
-//		error_command.command = Malf_Tdc;
-//		error_command.param.gp22_stat = stat;
-//		xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+		/* Send the raw data pointer to the data processing task */
+		if (xQueueSendFromISR(queueRawDataPtr, &g_rawDataPtr, &xTaskWoken) == pdTRUE) {
+			/* Reset pointer */
+			g_rawDataPtr = NULL;
+		}
+		else {
+			/* todo error code */
+	//		error_command.command = Malf_Tdc;
+	//		error_command.param.gp22_stat = stat;
+	//		xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+		}
 	}
 }
 
