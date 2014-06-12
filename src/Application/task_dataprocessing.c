@@ -107,6 +107,7 @@ void taskDataProcessing(void* pvParameters) {
 	double mean_value;
 
 	int16_t azimuth;
+	int16_t distance_mm;
 
 	char room_map_point[DATA_MESSAGE_STRING_LENGTH];
 
@@ -139,8 +140,13 @@ void taskDataProcessing(void* pvParameters) {
 			time = (mean_value / (double) 0xFFFF) * cal_resonator_factor * (1.0 / BSP_GP22_HS_CRYSTAL);
 			distance = VERILOG_OF_LIGHT / 2.0 * time;
 
+			//DEMO
+			distance = distance - 22.0;
+
+			distance_mm = 1000 * distance;
+
 			/* Encode the data of the point of the room map */
-			dataEncode(azimuth, distance, room_map_point);
+			dataEncode(azimuth, distance_mm, room_map_point);
 
 			/* Send the calculated result to the gatekeeper task */
 			xQueueSend(queueMessageData, room_map_point, portMAX_DELAY);
