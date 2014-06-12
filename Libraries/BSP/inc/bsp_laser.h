@@ -82,9 +82,9 @@ static const bsp_gpioconf_t BSP_LASER_PORT = {
 
 /* User defined sequence end interrupt settings */
 #define BSP_LASER_USR_IRQ_CHANEL	EXTI4_IRQn			/*!< NVIC timer interrupt */
-#define BSP_LASER_USR_IRQ_SOURCE	GPIO_Pin_4			/*!< NVIC timer interrupt source */
+#define BSP_LASER_USR_IRQ_SOURCE	EXTI_Line4			/*!< NVIC timer interrupt source */
 #define BSP_LASER_USR_IRQ_PRIORITY	8					/*!< NVIC timer interrupt priority */
-#define BSP_LASER_USR_IRQ_Handler	TIM4_IRQHandler		/*!< NVIC timer handler */
+#define BSP_LASER_USR_IRQ_Handler	EXTI4_IRQHandler	/*!< NVIC timer handler */
 
 
 /*

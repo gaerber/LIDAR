@@ -27,6 +27,12 @@
  */
 bsp_lasercallback_t g_int_callback = NULL;
 
+/**
+ * \brief	The old number of laser pulses. If the new value is the same, the
+ * 			timer must not be reloaded.
+ */
+uint32_t g_old_nr_of_pulses = 0;
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -52,11 +58,14 @@ void BSP_LASER_IRQ_Handler(void) {
 		TIM_ClearITPendingBit(BSP_LASER_TIMER_PORT_BASE, BSP_LASER_IRQ_SOURCE);
 		/* All pulse were generated -> disable the generator */
 		bsp_LaserDisable();
+		if (g_int_callback) {
+			EXTI_GenerateSWInterrupt(BSP_LASER_USR_IRQ_SOURCE);
+		}
 	}
 }
 
 /**
- * \brief	Software interrupt handler. A user callback function could be
+ * \brief	Software interrupt handler. An user callback function could be
  * 			registered with bsp_LaserSequenceCalback().
  */
 void BSP_LASER_USR_IRQ_Handler(void) {
@@ -159,10 +168,19 @@ void bsp_LaserInit(void) {
  * 			pulse sequence.
  */
 void bsp_LaserSequenceCalback(bsp_lasercallback_t callback) {
+	EXTI_InitTypeDef EXTI_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	/* Initialize the software interrupt */
 	if (g_int_callback == NULL) {
+		/* Configure EXTI line */
+		EXTI_InitStructure.EXTI_Line = BSP_LASER_USR_IRQ_SOURCE;
+		EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+		EXTI_Init(&EXTI_InitStructure);
+
+		/* Enable and set the Interrupt */
 		NVIC_InitStructure.NVIC_IRQChannel = BSP_LASER_USR_IRQ_CHANEL;
 		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = BSP_LASER_USR_IRQ_PRIORITY;
 		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
@@ -180,13 +198,33 @@ void bsp_LaserSequenceCalback(bsp_lasercallback_t callback) {
  * \param[in] nr_of_pulses is the number of pulse repetition.
  */
 void bsp_LaserPulse(uint32_t nr_of_pulses) {
+	NVIC_InitTypeDef NVIC_InitStructure;
+
 	/* parameter check */
 	assert(nr_of_pulses);
 
 	/* Sets the repetition counter */
 	BSP_LASER_TIMER_PORT_BASE->RCR = 2 * nr_of_pulses - 1;
-	/* Generate an update event to reload the repetition counter (only for TIM1 and TIM8) value immediately */
-	BSP_LASER_TIMER_PORT_BASE->EGR = TIM_PSCReloadMode_Immediate;
+
+	/* Reload the timer only if the number of pulses were changed */
+	if (nr_of_pulses != g_old_nr_of_pulses) {
+		/* Disable the reload interrupt */
+		NVIC_InitStructure.NVIC_IRQChannel = BSP_LASER_USR_IRQ_CHANEL;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = BSP_LASER_USR_IRQ_PRIORITY;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+		NVIC_Init(&NVIC_InitStructure);
+
+		/* Generate an update event to reload the repetition counter (only for TIM1 and TIM8) value immediately */
+		BSP_LASER_TIMER_PORT_BASE->EGR = TIM_PSCReloadMode_Immediate;
+
+		/* Clear the interrupt flag */
+		EXTI_ClearITPendingBit(BSP_LASER_USR_IRQ_SOURCE);
+
+		/* Enable the reload interrupt */
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+	}
 
 	/* Starts the laser pulses */
 	bsp_LaserEnable();
