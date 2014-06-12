@@ -17,6 +17,19 @@
 
 /*
  * ----------------------------------------------------------------------------
+ * Local variables
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * \brief	User defined interrupt callback function called after a laser pulse
+ * 			sequence.
+ */
+bsp_lasercallback_t g_int_callback = NULL;
+
+
+/*
+ * ----------------------------------------------------------------------------
  * Private functions prototypes
  * ----------------------------------------------------------------------------
  */
@@ -40,6 +53,23 @@ void BSP_LASER_IRQ_Handler(void) {
 		/* All pulse were generated -> disable the generator */
 		bsp_LaserDisable();
 	}
+}
+
+/**
+ * \brief	Software interrupt handler. A user callback function could be
+ * 			registered with bsp_LaserSequenceCalback().
+ */
+void BSP_LASER_USR_IRQ_Handler(void) {
+	/* Software interrupt */
+    if(EXTI_GetITStatus(BSP_LASER_USR_IRQ_SOURCE) != RESET) {
+        /* Clear the interrupt flag */
+    	EXTI_ClearITPendingBit(BSP_LASER_USR_IRQ_SOURCE);
+        /* Check if an user defined clallback function is set */
+    	if (g_int_callback != NULL) {
+        	/* Execute the user defined callback function */
+    		g_int_callback();
+        }
+    }
 }
 
 
@@ -120,6 +150,26 @@ void bsp_LaserInit(void) {
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
+}
+
+/**
+ * \brief	Registred an user defined callback function at the end of a laser
+ * 			pulse sequence.
+ */
+void bsp_LaserSequenceCalback(bsp_lasercallback_t callback) {
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	/* Initialize the software interrupt */
+	if (g_int_callback == NULL) {
+		NVIC_InitStructure.NVIC_IRQChannel = BSP_LASER_USR_IRQ_CHANEL;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = BSP_LASER_USR_IRQ_PRIORITY;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+	}
+
+	/* Registered the user defined callback function */
+	g_int_callback = callback;
 }
 
 /**

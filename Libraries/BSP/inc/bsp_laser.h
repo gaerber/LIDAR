@@ -26,6 +26,19 @@
 
 /*
  * ----------------------------------------------------------------------------
+ * Type declarations
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * \typedef	bsp_lasercallback_t
+ * \brief	Interrupt callback function called after a laser pulse sequence.
+ */
+typedef void (*bsp_lasercallback_t)(void);
+
+
+/*
+ * ----------------------------------------------------------------------------
  * Pulse settings
  * ----------------------------------------------------------------------------
  */
@@ -61,11 +74,17 @@ static const bsp_gpioconf_t BSP_LASER_PORT = {
 		RCC_AHB1Periph_GPIOC, GPIOC, GPIO_Pin_6, GPIO_Mode_AF, GPIO_PuPd_DOWN, GPIO_AF_TIM8
 };
 
-/* Interrupt settings */
+/* Laser interrupt settings */
 #define BSP_LASER_IRQ_CHANEL		TIM8_UP_TIM13_IRQn	/*!< NVIC timer interrupt */
 #define BSP_LASER_IRQ_SOURCE		TIM_IT_Update		/*!< NVIC timer interrupt source */
 #define BSP_LASER_IRQ_PRIORITY		0					/*!< NVIC timer interrupt priority */
 #define BSP_LASER_IRQ_Handler		TIM8_UP_TIM13_IRQHandler	/*!< NVIC timer handler */
+
+/* User defined sequence end interrupt settings */
+#define BSP_LASER_USR_IRQ_CHANEL	EXTI4_IRQn			/*!< NVIC timer interrupt */
+#define BSP_LASER_USR_IRQ_SOURCE	GPIO_Pin_4			/*!< NVIC timer interrupt source */
+#define BSP_LASER_USR_IRQ_PRIORITY	8					/*!< NVIC timer interrupt priority */
+#define BSP_LASER_USR_IRQ_Handler	TIM4_IRQHandler		/*!< NVIC timer handler */
 
 
 /*
@@ -74,6 +93,7 @@ static const bsp_gpioconf_t BSP_LASER_PORT = {
  * ----------------------------------------------------------------------------
  */
 extern void bsp_LaserInit(void);
+extern void bsp_LaserSequenceCalback(bsp_lasercallback_t callback);
 extern void bsp_LaserPulse(uint32_t nr_of_pulses);
 extern uint8_t bsp_LaserOvercurrent(void);
 
