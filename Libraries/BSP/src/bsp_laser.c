@@ -89,6 +89,8 @@ void bsp_LaserInit(void) {
 
 	uint16_t PrescalerValue;
 
+	TIM_DeInit(BSP_LASER_TIMER_PORT_BASE);
+
 	/* Initialize the overcurrent detection input */
 	bsp_GpioInit(&BSP_LASER_NER_PORT);
 
