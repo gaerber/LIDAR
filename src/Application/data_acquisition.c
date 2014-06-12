@@ -138,6 +138,10 @@ void DataAcquisitionStart(uint32_t atzimuth_left, uint32_t azimuth_right,
 	 * high speed clock from the TDC */
 	bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
 	bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
+
+	//DEMO
+	bsp_QuadencPosCallback(azimuthMeasurementHandler);
+	bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 }
 
 /**
