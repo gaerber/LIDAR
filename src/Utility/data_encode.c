@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include "data_encode.h"
 
+extern int sprintf(char* str, const char *fmt, ...);
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -25,7 +27,7 @@
  * \param[in]	distance is the 12 bit unsigned distance value in millimeters.
  * \param[out]	base64 is a storage address of 4 bytes for the encoded data. MSB first.
  */
-inline void dataEncode(int16_t azimuth, int16_t distance, char *base64) {
+inline void dataEncodeORIG(int16_t azimuth, int16_t distance, char *base64) {
 	/* Look up table due to performance */
 	static const char look_up_table[] = {
 			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -42,6 +44,10 @@ inline void dataEncode(int16_t azimuth, int16_t distance, char *base64) {
 	/* Convert distance */
 	base64[2] = look_up_table[(distance >> 6) & 0x3F];
 	base64[3] = look_up_table[(distance) & 0x3F];
+}
+
+inline void dataEncode(int16_t azimuth, int16_t distance, char *base64) {
+	sprintf(base64, "%d", distance);
 }
 
 /**
