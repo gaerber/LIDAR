@@ -202,7 +202,7 @@ void systemCheckCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-//	bsp_LedInit();
+	bsp_LedInit();
 
 	/* Initialize the data acquisition */
 	DataAcquisitionInit();
@@ -242,7 +242,7 @@ void taskController(void* pvParameters) {
 
 	//DEMO
 	command.command = UC_Data;
-	xQueueSend(queueCommand, &command, portMAX_DELAY);
+	//xQueueSend(queueCommand, &command, portMAX_DELAY);
 
 	/* Loop forever */
 	for (;;) {
@@ -268,12 +268,10 @@ void taskController(void* pvParameters) {
 				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
 				g_systemState.azimuth_res = tenthdegree2increments_Relative(DA_AZIMUTH_RES);
 				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
-				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (DA_DEF_SCANRATE /* * REGLER_ZEITKONSTANTE_TA */);
-
-				g_systemState.engine_speed = 20;
+				g_systemState.engine_speed = DA_DEF_SCANRATE * BSP_QUADENC_INC_PER_TURN / (1000*ENGINE_CONTROLER_TA);
 
 				/* Reads the first user command */
-				//todo xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
 			/* Make a system check */
@@ -290,23 +288,25 @@ void taskController(void* pvParameters) {
 
 			/* Change into the command mode */
 			case UC_Cmd:
-				/* Stop the data acquisition */
-				DataAcquisitionStop();
+				if (g_systemState.state == MODE_DATA) {
+					/* Stop the data acquisition */
+					DataAcquisitionStop();
 
-				/* Stop the engine after a given time delay */
-				if (g_systemState.engine_sleep > 0) {
-					xTimerChangePeriod(timerEngineSleep, g_systemState.engine_sleep, portMAX_DELAY);
-					xTimerStart(timerEngineSleep, portMAX_DELAY);
-				}
-				else {
-					/* Stop the engine now */
-					engine_speed = 0;
-					xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
-				}
+					/* Stop the engine after a given time delay */
+					if (g_systemState.engine_sleep > 0) {
+						xTimerChangePeriod(timerEngineSleep, g_systemState.engine_sleep, portMAX_DELAY);
+						xTimerStart(timerEngineSleep, portMAX_DELAY);
+					}
+					else {
+						/* Stop the engine now */
+						engine_speed = 0;
+						xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
+					}
 
-				/* Change the state */
-				g_systemState.state = MODE_CMD;
-				g_systemState.readcommand = g_systemState.comm_echo;
+					/* Change the state */
+					g_systemState.state = MODE_CMD;
+					g_systemState.readcommand = g_systemState.comm_echo;
+				}
 
 				/* Send the response message */
 				sendMessage(MSG_TYPE_STATE, "cmd");
@@ -317,21 +317,23 @@ void taskController(void* pvParameters) {
 
 			/* Change into the data mode and starts the data acquisition */
 			case UC_Data:
-				/* Change the system state */
-				g_systemState.state = MODE_DATA;
-				g_systemState.readcommand = 0;
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.state = MODE_DATA;
+					g_systemState.readcommand = 0;
 
-				/* Starts the engine */
-				xTimerStop(timerEngineSleep, portMAX_DELAY);
-				xQueueSend(queueSpeed, &g_systemState.engine_speed, portMAX_DELAY);
+					/* Starts the engine */
+					xTimerStop(timerEngineSleep, portMAX_DELAY);
+					xQueueSend(queueSpeed, &g_systemState.engine_speed, portMAX_DELAY);
 
-				/* Send the response message */
-				sendMessage(MSG_TYPE_STATE, "data");
+					/* Send the response message */
+					sendMessage(MSG_TYPE_STATE, "data");
 
-				/* todo Waits until the engine reached his speed. */
-				/* Starts the data acquisition */
-				DataAcquisitionStart(g_systemState.azimuth_left, g_systemState.azimuth_right,
-						g_systemState.azimuth_res, g_systemState.laser_pulses);
+					/* todo Waits until the engine reached his speed. */
+					/* Starts the data acquisition */
+					DataAcquisitionStart(g_systemState.azimuth_left, g_systemState.azimuth_right,
+							g_systemState.azimuth_res, g_systemState.laser_pulses);
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -354,12 +356,14 @@ void taskController(void* pvParameters) {
 
 			/* Enable/disable the command echo */
 			case UC_SetCommEcho:
-				/* Change the system state */
-				g_systemState.comm_echo = command.param.echo;
-				g_systemState.readcommand = command.param.echo;
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.comm_echo = command.param.echo;
+					g_systemState.readcommand = command.param.echo;
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -367,11 +371,13 @@ void taskController(void* pvParameters) {
 
 			/* Enable/disable the response message */
 			case UC_SetCommRespmsg:
-				/* Change the system state */
-				g_systemState.comm_respmsg = command.param.respmsg;
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.comm_respmsg = command.param.respmsg;
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -379,14 +385,16 @@ void taskController(void* pvParameters) {
 
 			/* Configure the scan area boundary */
 			case UC_SetScanBndry:
-				/* Change the system state */
-				g_systemState.scan_bndry_left = command.param.azimuth_bndry.left;
-				g_systemState.scan_bndry_right = command.param.azimuth_bndry.right;
-				g_systemState.azimuth_left = tenthdegree2increments(command.param.azimuth_bndry.left);
-				g_systemState.azimuth_right = tenthdegree2increments(command.param.azimuth_bndry.right);
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.scan_bndry_left = command.param.azimuth_bndry.left;
+					g_systemState.scan_bndry_right = command.param.azimuth_bndry.right;
+					g_systemState.azimuth_left = tenthdegree2increments(command.param.azimuth_bndry.left);
+					g_systemState.azimuth_right = tenthdegree2increments(command.param.azimuth_bndry.right);
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -394,12 +402,14 @@ void taskController(void* pvParameters) {
 
 			/* Configure the step size between two measurement points */
 			case UC_SetScanStep:
-				/* Change the system state */
-				g_systemState.scan_step = command.param.azimuth_step;
-				g_systemState.azimuth_res = tenthdegree2increments_Relative(command.param.azimuth_step);
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.scan_step = command.param.azimuth_step;
+					g_systemState.azimuth_res = tenthdegree2increments_Relative(command.param.azimuth_step);
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -407,12 +417,14 @@ void taskController(void* pvParameters) {
 
 			/* Configure the update rate of the hole room map */
 			case UC_SetScanRate:
-				/* Change the system state */
-				g_systemState.scan_rate = command.param.scan_rate;
-				g_systemState.engine_speed = BSP_QUADENC_INC_PER_TURN / (command.param.scan_rate /* * REGLER_ZEITKONSTANTE_TA */);
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.scan_rate = command.param.scan_rate;
+					g_systemState.engine_speed = command.param.scan_rate * BSP_QUADENC_INC_PER_TURN / (1000*ENGINE_CONTROLER_TA);
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -420,11 +432,13 @@ void taskController(void* pvParameters) {
 
 			/* Sets the time delay before the engine is suspended */
 			case UC_SetEngineSleep:
-				/* Change the system state */
-				g_systemState.engine_sleep = command.param.engine_sleep;
+				if (g_systemState.state == MODE_CMD) {
+					/* Change the system state */
+					g_systemState.engine_sleep = command.param.engine_sleep;
 
-				/* Send the acknowledge to the user */
-				sendMessage(MSG_TYPE_RSP, "00 aok");
+					/* Send the acknowledge to the user */
+					sendMessage(MSG_TYPE_RSP, "00 aok");
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -436,8 +450,10 @@ void taskController(void* pvParameters) {
 
 			/* Get the version number */
 			case UC_GetVer:
-				/* Print the version number */
-				sendMessage(MSG_TYPE_CONF, "ver "LIDAR_VERSION);
+				if (g_systemState.state == MODE_CMD) {
+					/* Print the version number */
+					sendMessage(MSG_TYPE_CONF, "ver "LIDAR_VERSION);
+				}
 
 				/* Execute all get cases */
 				if (command.command != UC_GetAll) {
@@ -448,13 +464,15 @@ void taskController(void* pvParameters) {
 
 			/* Get the communication configurations */
 			case UC_GetComm:
-				/* Print communication echo */
-				sprintf(str_buffer, "comm echo %s", g_systemState.comm_echo ? "on" : "off");
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+				if (g_systemState.state == MODE_CMD) {
+					/* Print communication echo */
+					sprintf(str_buffer, "comm echo %s", g_systemState.comm_echo ? "on" : "off");
+					sendMessage(MSG_TYPE_CONF, str_buffer);
 
-				/* Print communication response message */
-				sprintf(str_buffer, "comm respmsg %s", g_systemState.comm_respmsg ? "on" : "off");
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+					/* Print communication response message */
+					sprintf(str_buffer, "comm respmsg %s", g_systemState.comm_respmsg ? "on" : "off");
+					sendMessage(MSG_TYPE_CONF, str_buffer);
+				}
 
 				/* Execute all get cases */
 				if (command.command != UC_GetAll) {
@@ -465,17 +483,19 @@ void taskController(void* pvParameters) {
 
 			/* Get the scan configurations */
 			case UC_GetScan:
-				/* Print scan boundary */
-				sprintf(str_buffer, "scan bndry %d %d", g_systemState.scan_bndry_left, g_systemState.scan_bndry_right);
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+				if (g_systemState.state == MODE_CMD) {
+					/* Print scan boundary */
+					sprintf(str_buffer, "scan bndry %d %d", g_systemState.scan_bndry_left, g_systemState.scan_bndry_right);
+					sendMessage(MSG_TYPE_CONF, str_buffer);
 
-				/* Print scan step */
-				sprintf(str_buffer, "scan step %d", g_systemState.scan_step);
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+					/* Print scan step */
+					sprintf(str_buffer, "scan step %d", g_systemState.scan_step);
+					sendMessage(MSG_TYPE_CONF, str_buffer);
 
-				/* Print scan rate */
-				sprintf(str_buffer, "scan rate %d", g_systemState.scan_rate);
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+					/* Print scan rate */
+					sprintf(str_buffer, "scan rate %d", g_systemState.scan_rate);
+					sendMessage(MSG_TYPE_CONF, str_buffer);
+				}
 
 				/* Execute all get cases */
 				if (command.command != UC_GetAll) {
@@ -486,9 +506,11 @@ void taskController(void* pvParameters) {
 
 			/* Get the engine configurations */
 			case UC_GetEngine:
-				/* Print engine sleep */
-				sprintf(str_buffer, "engien sleep %d", g_systemState.engine_sleep);
-				sendMessage(MSG_TYPE_CONF, str_buffer);
+				if (g_systemState.state == MODE_CMD) {
+					/* Print engine sleep */
+					sprintf(str_buffer, "engien sleep %d", g_systemState.engine_sleep);
+					sendMessage(MSG_TYPE_CONF, str_buffer);
+				}
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -547,18 +569,21 @@ void taskController(void* pvParameters) {
 			case Malf_EngineDriver:
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "engine driver malfunction");
 			break;
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "laser driver malfunction");
 				break;
 
 			/* Quadrature encoder malfunction was detected */
 			case Malf_QuadEnc:
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "quadrature encoder malfunction");
 				break;
 
 			/* TDC stat register has an unexpected value */
@@ -570,7 +595,7 @@ void taskController(void* pvParameters) {
 			/* Command error */
 			default:
 				triggerMalfunctionLed();
-				sendMessage(MSG_TYPE_STATE, "Controller Task Error");
+				sendMessage(MSG_TYPE_STATE, "unknown controller command");
 				break;
 			}
 		}
