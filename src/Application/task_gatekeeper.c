@@ -124,14 +124,14 @@ void taskGatekeeper(void* pvParameters) {
 		/* Check the type of the message */
 		if (xActivatedMember == queueMessageData) {
 			/* A data message */
-			selector = MSG_TYPE_DATA;
 			xQueueReceive(queueMessageData, message_data, 0);
+			selector = MSG_TYPE_DATA;
 			ptr = message_data;
 		}
 		else if (xActivatedMember == queueMessage) {
 			/* A normal message */
-			selector = message.type;
 			xQueueReceive(queueMessage, &message, 0);
+			selector = message.type;
 			ptr = message.msg;
 		}
 		else {
