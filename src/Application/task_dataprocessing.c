@@ -23,6 +23,7 @@
 /* Application */
 #include "task_dataprocessing.h"
 #include "task_gatekeeper.h"
+#include "task_controller.h"
 
 /* BSP */
 #include "bsp_quadenc.h"
@@ -108,6 +109,7 @@ void taskDataProcessing(void* pvParameters) {
 
 	int16_t azimuth;
 	int16_t distance_mm;
+	int16_t distance_offset_mm = 0;
 
 	char room_map_point[DATA_MESSAGE_STRING_LENGTH];
 
@@ -128,7 +130,8 @@ void taskDataProcessing(void* pvParameters) {
 			for (i=0; i<raw_data->raw_ctr; i++) {
 				mean_value += raw_data->raw[i];
 			}
-			mean_value = mean_value / raw_data->raw_ctr;
+			mean_value += (raw_data->expected_points - raw_data->raw_ctr) * 0x7FFFFFFF;
+			mean_value = mean_value / raw_data->expected_points;
 
 			/* Calculate the azimuth [tenth degree] */
 			azimuth = increments2tenthdegree(raw_data->increments);
@@ -140,16 +143,24 @@ void taskDataProcessing(void* pvParameters) {
 			time = (mean_value / (double) 0xFFFF) * cal_resonator_factor * (1.0 / BSP_GP22_HS_CRYSTAL);
 			distance = VERILOG_OF_LIGHT / 2.0 * time;
 
-			//DEMO
+			//todo DEMO
 			distance = distance - 22.0;
 
 			distance_mm = 1000 * distance;
 
-			/* Encode the data of the point of the room map */
-			dataEncode(azimuth, distance_mm, room_map_point);
+			if (azimuth == DA_AZIMUTH_CAL_DIST) {
+				/* Set the new calibration offset */
+				distance_offset_mm = distance_mm;
+			}
+			else {
+				distance_mm = distance_mm - distance_offset_mm;
 
-			/* Send the calculated result to the gatekeeper task */
-			xQueueSend(queueMessageData, room_map_point, portMAX_DELAY);
+				/* Encode the data of the point of the room map */
+				dataEncode(azimuth, distance_mm, room_map_point);
+
+				/* Send the calculated result to the gatekeeper task */
+				xQueueSend(queueMessageData, room_map_point, portMAX_DELAY);
+			}
 		}
 	}
 

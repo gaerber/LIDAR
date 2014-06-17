@@ -57,6 +57,7 @@
 typedef struct {
 	uint32_t increments;		/*!< Azimuth in increments. */
 	uint32_t cal_resonator;		/*!< Raw calibration value of the resonator. */
+	uint32_t expected_points;	/*!< Number of expected raw data points. */
 	uint32_t raw_ctr;			/*!< Raw data counter. */
 	uint32_t raw[MAX_RAWDATA_LENGTH];	/*!< Raw data. */
 } rawdata_t;

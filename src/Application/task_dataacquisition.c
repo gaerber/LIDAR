@@ -413,6 +413,7 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 			/* Set the default values */
 			g_rawDataPtr->cal_resonator = g_rawCalibrationData;
 			g_rawDataPtr->increments = azimuth;
+			g_rawDataPtr->expected_points = g_configs.laser_pulses;
 			g_rawDataPtr->raw_ctr = 0;
 
 			/* Set the TDC callback function */
