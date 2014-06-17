@@ -202,7 +202,7 @@ void systemCheckCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-	bsp_LedInit();
+//	bsp_LedInit();
 
 	/* Initialize the data acquisition */
 	DataAcquisitionInit();
@@ -268,7 +268,7 @@ void taskController(void* pvParameters) {
 				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
 				g_systemState.azimuth_res = tenthdegree2increments_Relative(DA_AZIMUTH_RES);
 				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
-				g_systemState.engine_speed = DA_DEF_SCANRATE * BSP_QUADENC_INC_PER_TURN / (1000*ENGINE_CONTROLER_TA);
+				g_systemState.engine_speed = DA_DEF_SCANRATE * (BSP_QUADENC_INC_PER_TURN+1) / (1000*ENGINE_CONTROLER_TA);
 
 				/* Reads the first user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -330,6 +330,8 @@ void taskController(void* pvParameters) {
 					sendMessage(MSG_TYPE_STATE, "data");
 
 					/* todo Waits until the engine reached his speed. */
+					vTaskDelay(100);
+
 					/* Starts the data acquisition */
 					DataAcquisitionStart(g_systemState.azimuth_left, g_systemState.azimuth_right,
 							g_systemState.azimuth_res, g_systemState.laser_pulses);
@@ -420,7 +422,7 @@ void taskController(void* pvParameters) {
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
 					g_systemState.scan_rate = command.param.scan_rate;
-					g_systemState.engine_speed = command.param.scan_rate * BSP_QUADENC_INC_PER_TURN / (1000*ENGINE_CONTROLER_TA);
+					g_systemState.engine_speed = command.param.scan_rate * (BSP_QUADENC_INC_PER_TURN+1) / (1000*ENGINE_CONTROLER_TA);
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -518,7 +520,11 @@ void taskController(void* pvParameters) {
 
 			/* todo last: Some magic feature */
 			case UC_EE:
-				triggerMalfunctionLed();
+//				triggerMalfunctionLed();
+//				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
+				bsp_LaserPulse(7);
+
+				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
