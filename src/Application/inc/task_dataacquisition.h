@@ -26,7 +26,7 @@
  * ----------------------------------------------------------------------------
  */
 #define TASK_DATAACQUISITION_NAME		"Acquisition"				/*!< Task name. */
-#define TASK_DATAACQUISITION_PRIORITY	2							/*!< Task Priority. */
+#define TASK_DATAACQUISITION_PRIORITY	6							/*!< Task Priority. */
 #define TASK_DATAACQUISITION_STACKSIZE	configMINIMAL_STACK_SIZE	/*!< Task Stack size. */
 
 
