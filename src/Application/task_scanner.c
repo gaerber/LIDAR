@@ -130,19 +130,30 @@ void taskScanner(void* pvParameters) {
 			e = set_point - process_variable;
 
 			/* Anti windup circuit */
-			if (controlling_element < BSP_ENGINE_PWM_PERIOD && controlling_element > -1 * BSP_ENGINE_PWM_PERIOD) {
+			if (controlling_element < ENGINE_MAX_POWER && controlling_element > -1 * ENGINE_MAX_POWER) {
 				e_sum = e_sum + e;
+
+				//////////////
+
+				if (e_sum > ENGINE_MAX_POWER / ENGINE_CONTROLER_KI) {
+					e_sum = ENGINE_MAX_POWER / ENGINE_CONTROLER_KI;
+				}
+				if (e_sum < (-1 * ENGINE_MAX_POWER / ENGINE_CONTROLER_KI)) {
+					e_sum = -1 * ENGINE_MAX_POWER / ENGINE_CONTROLER_KI;
+				}
+
+				///////////////
 			} /* In case of assessed controlling element -> integrator freeze */
 
 			/* PI controller */
 			controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
 
 			/* Limit the controlling element */
-			if (controlling_element >= BSP_ENGINE_PWM_PERIOD) {
-				controlling_element = BSP_ENGINE_PWM_PERIOD - 1;
+			if (controlling_element > ENGINE_MAX_POWER) {
+				controlling_element = ENGINE_MAX_POWER;
 			}
-			if (controlling_element <= (-1 * BSP_ENGINE_PWM_PERIOD)) {
-				controlling_element = -1 * (BSP_ENGINE_PWM_PERIOD - 1);
+			if (controlling_element < (-1 * ENGINE_MAX_POWER)) {
+				controlling_element = -1 * ENGINE_MAX_POWER;
 			}
 
 			/* Sets the new controlling element */
