@@ -67,11 +67,6 @@ typedef struct {
 		MODE_DATA				/*!< Mode DATA. */
 	} state;					/*!< System mode. */
 	readcommand_t readcommand;	/*!< The read command value for the command interpreter task. */
-//	uint32_t azimuth_left;		/*!< Calculated scan area boundary left. [increments] */
-//	uint32_t azimuth_right;		/*!< Calculated scan area boundary right. [increments] */
-//	uint32_t azimuth_res;		/*!< Calculated step size between two measurement points. [increments] */
-//	uint32_t laser_pulses;		/*!< Number of laser pulses each measurement point. */
-//	int32_t engine_speed;		/*!< Engine speed in increments per time interval. */
 } system_t;
 
 
@@ -118,11 +113,6 @@ QueueHandle_t queueCommand;
 TimerHandle_t timerMalfunctionLed;
 
 /**
- * \brief	Software timer handler for the cycle system test.
- */
-//TimerHandle_t timerSystemCheck;
-
-/**
  * \brief	The actual system state and configurations.
  */
 
@@ -145,35 +135,6 @@ void MalfLedCallback(TimerHandle_t xTimer) {
 	bsp_LedSetOff(BSP_LED_RED);
 }
 
-/**
- * \brief	Timer callback function to make a system check of the data acquisition.
- * 			The Laser driver error flag will be checked.
- * \param[in]	xTimer The identifier that is assigned to the timer being called.
- * 				Not used.
- */
-void systemCheckCallback(TimerHandle_t xTimer) {
-	command_t command;
-	uint8_t overcurrent;
-	static uint8_t overcurrent_last = 1;
-
-	for(;;);
-
-	/* Get the overcurrent flag */
-	overcurrent = bsp_LaserOvercurrent();
-
-	/* Check if a overcurrent is ocured */
-	if (!overcurrent && overcurrent_last) {
-		command.command = Malf_LaserDriver;
-		if (xQueueSend(queueCommand, &command, 0) == pdTRUE) {
-			overcurrent_last = overcurrent;
-		}
-		/* If queue is full, wait for an other check cycle */
-	}
-	else {
-		overcurrent_last = overcurrent;
-	}
-}
-
 
 /*
  * ----------------------------------------------------------------------------
@@ -189,9 +150,6 @@ void taskControllerInit(void) {
 	/* Initialize the LEDs */
 //	bsp_LedInit();
 
-	/* Initialize the data acquisition */
-//	DataAcquisitionInit();
-
 	/* Generate the task */
 	xTaskCreate(taskController, TASK_CONTROLLER_NAME, TASK_CONTROLLER_STACKSIZE,
 			NULL, TASK_CONTROLLER_PRIORITY, &taskControllerHandle);
@@ -202,8 +160,6 @@ void taskControllerInit(void) {
 	/* Generate the timer */
 	timerMalfunctionLed = xTimerCreate("Malf LED", 3000/portTICK_PERIOD_MS,
 			pdFALSE, (void*)BSP_LED_RED, MalfLedCallback);
-//	timerSystemCheck = xTimerCreate("Sys Check", 100/portTICK_PERIOD_MS,
-//			pdTRUE, NULL, systemCheckCallback);
 }
 
 /**
@@ -214,6 +170,7 @@ void taskController(void* pvParameters) {
 	command_t command;
 	char str_buffer[64];
 	dataacquisition_t data_acquisition_config;
+	uint16_t tdc_hits;
 
 	/* Sends the welcome text */
 	command.command = Sys_Welcome;
@@ -222,10 +179,6 @@ void taskController(void* pvParameters) {
 	/* initialize the system */
 	command.command = Sys_Init;
 	xQueueSend(queueCommand, &command, portMAX_DELAY);
-
-	//DEMO
-	command.command = UC_Data;
-	//xQueueSend(queueCommand, &command, portMAX_DELAY);
 
 	/* Loop forever */
 	for (;;) {
@@ -247,11 +200,6 @@ void taskController(void* pvParameters) {
 				g_systemState.engine_sleep = 0;
 				g_systemState.state = MODE_CMD;
 				g_systemState.readcommand = 1;
-//				g_systemState.azimuth_left = tenthdegree2increments(DA_AZIMUTH_MIN);
-//				g_systemState.azimuth_right = tenthdegree2increments(DA_AZIMUTH_MAX);
-//				g_systemState.azimuth_res = tenthdegree2increments_Relative(DA_AZIMUTH_RES);
-//				g_systemState.laser_pulses = DA_LASERPULSE / DA_DEF_SCANRATE;
-//				g_systemState.engine_speed = DA_DEF_SCANRATE * (BSP_QUADENC_INC_PER_TURN+1) / (1000*ENGINE_CONTROLER_TA);
 
 				/* Reads the first user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -277,19 +225,6 @@ void taskController(void* pvParameters) {
 					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
 					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
 
-//					DataAcquisitionStop();
-//
-//					/* Stop the engine after a given time delay */
-//					if (g_systemState.engine_sleep > 0) {
-//						xTimerChangePeriod(timerEngineSleep, g_systemState.engine_sleep, portMAX_DELAY);
-//						xTimerStart(timerEngineSleep, portMAX_DELAY);
-//					}
-//					else {
-//						/* Stop the engine now */
-//						engine_speed = 0;
-//						xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
-//					}
-
 					/* Change the state */
 					g_systemState.state = MODE_CMD;
 					g_systemState.readcommand = g_systemState.comm_echo;
@@ -309,10 +244,6 @@ void taskController(void* pvParameters) {
 					g_systemState.state = MODE_DATA;
 					g_systemState.readcommand = 0;
 
-//					/* Starts the engine */
-//					xTimerStop(timerEngineSleep, portMAX_DELAY);
-//					xQueueSend(queueSpeed, &g_systemState.engine_speed, portMAX_DELAY);
-
 					/* Starts the data acquisition */
 					data_acquisition_config.state = DATA_ACQUISITION_ENABLE;
 					data_acquisition_config.param.scan.bndry_left = g_systemState.scan_bndry_left;
@@ -323,13 +254,6 @@ void taskController(void* pvParameters) {
 
 					/* Send the response message */
 					sendMessage(MSG_TYPE_STATE, "data");
-
-//					/* todo Waits until the engine reached his speed. */
-//					vTaskDelay(100);
-//
-//					/* Starts the data acquisition */
-//					DataAcquisitionStart(g_systemState.azimuth_left, g_systemState.azimuth_right,
-//							g_systemState.azimuth_res, g_systemState.laser_pulses);
 				}
 
 				/* Read the next user command */
@@ -523,11 +447,6 @@ void taskController(void* pvParameters) {
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
-			/* todo last: Exit the system */
-			case UC_Exit:
-
-				break;
-
 			/* A unknown command is received */
 			case ErrUC_UnknownCommand:
 				sprintf(str_buffer, "%d unknown command", 11 + command.param.error_level);
@@ -568,6 +487,16 @@ void taskController(void* pvParameters) {
 
 			/* Engine overcurrent or thermal shutdown */
 			case Malf_EngineDriver:
+				if (g_systemState.state == MODE_DATA) {
+					/* Stop the data acquisition */
+					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
+					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+					/* Change the state */
+					g_systemState.state = MODE_CMD;
+				}
+
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "engine driver malfunction");
@@ -575,6 +504,16 @@ void taskController(void* pvParameters) {
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
+				if (g_systemState.state == MODE_DATA) {
+					/* Stop the data acquisition */
+					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
+					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+					/* Change the state */
+					g_systemState.state = MODE_CMD;
+				}
+
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "laser driver malfunction");
@@ -591,6 +530,80 @@ void taskController(void* pvParameters) {
 			case Malf_Tdc:
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
+				/* Check the type of error */
+				if (command.param.gp22_stat & 0xE000) {
+					sendMessage(MSG_TYPE_STATE, "tdc eeprom malfunction");
+				}
+				if (command.param.gp22_stat & 0x1800) {
+					sendMessage(MSG_TYPE_STATE, "tdc temperature sensor malfunction");
+				}
+				if (command.param.gp22_stat & 0x0400) {
+					sendMessage(MSG_TYPE_STATE, "tdc precounter timeout");
+				}
+				if (command.param.gp22_stat & 0x0200) {
+					sendMessage(MSG_TYPE_STATE, "tdc timeout");
+				}
+				/* number of hits channel 2 */
+				tdc_hits = (command.param.gp22_stat & 0x01C0) >> 6;
+				if (tdc_hits > 1) {
+					sendMessage(MSG_TYPE_STATE, "tdc to many hits on CH2");
+				}
+				/* number of hits channel 1 */
+				tdc_hits = (command.param.gp22_stat & 0x0038) >> 3;
+				if (tdc_hits > 1) {
+					sendMessage(MSG_TYPE_STATE, "monitor diode malfunction");
+				}
+				if (tdc_hits == 0) {
+					sendMessage(MSG_TYPE_STATE, "laser diode malfunction");
+				}
+				break;
+
+			/* Serial interface timeout occurs */
+			case Marf_Serial:
+				/* Sets the LED forever */
+				bsp_LedSetOn(BSP_LED_RED);
+				/* Error message is not possible due the malfunction in the gatekeeper */
+
+				/* Disable all interrupts */
+				__disable_irq();
+				/* ... and hang on */
+				for (;;) {
+
+				}
+				break;
+
+			/* No space available in memory pool */
+			case Fault_MemoryPool:
+				if (g_systemState.state == MODE_DATA) {
+					/* Stop the data acquisition */
+					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
+					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+					/* Change the state */
+					g_systemState.state = MODE_CMD;
+				}
+
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "no space available in memory pool");
+				break;
+
+			/* Not allowed pointer to raw data memory */
+			case Fault_MemoryPoolPtr:
+				if (g_systemState.state == MODE_DATA) {
+					/* Stop the data acquisition */
+					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
+					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+					/* Change the state */
+					g_systemState.state = MODE_CMD;
+				}
+
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "internal timing malfunction");
 				break;
 
 			/* Command error */

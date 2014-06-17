@@ -85,7 +85,6 @@ typedef struct {
 		UC_GetScan,			/*!< Get the scan configurations. */
 		UC_GetEngine,		/*!< Get the engine configurations. */
 		UC_EE,				/*!< Some magic feature. */
-		UC_Exit,			/*!< Exit the system */
 
 		/* User Command Error */
 		ErrUC_UnknownCommand,	/*!< A unknown command is received. */
@@ -94,12 +93,17 @@ typedef struct {
 		ErrUC_ArgOutOfBounds,	/*!< One or more arguments were out of the allowed bounds. */
 		ErrUC_LineOverflow,	/*!< Command line overflow detected. */
 
-		/* System malfunctions */
+		/* System component malfunctions */
 		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
 		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
 		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
 		Malf_Tdc,			/*!< TDC stat register has an unexpected value. */
-		Marf_Serial			/*!< Serial interface timeout occurs. */
+		Marf_Serial,		/*!< Serial interface timeout occurs. */
+
+		/* System fault */
+		Fault_MemoryPool,	/*!< No space available in memory pool. */
+		Fault_MemoryPoolPtr,/*!< Not allowed pointer to raw data memory. */
+
 	} command;
 
 	/*! The parameters of the command/event. */
