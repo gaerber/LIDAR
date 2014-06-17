@@ -98,7 +98,8 @@ typedef struct {
 		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
 		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
 		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
-		Malf_Tdc			/*!< TDC stat register has an unexpected value. */
+		Malf_Tdc,			/*!< TDC stat register has an unexpected value. */
+		Marf_Serial			/*!< Serial interface timeout occurs. */
 	} command;
 
 	/*! The parameters of the command/event. */

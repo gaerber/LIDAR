@@ -22,6 +22,7 @@
 
 /* Application */
 #include "task_gatekeeper.h"
+#include "task_controller.h"
 
 /* BSP */
 #include "bsp_serial.h"
@@ -116,6 +117,9 @@ void taskGatekeeper(void* pvParameters) {
 	uint32_t i;
 	static const char frame_end[] = MSG_FRAME_END;
 
+	command_t command;
+	uint32_t timeout;
+
 	/* Loop forever */
 	for (;;) {
 		/* Get the message, which has to be sent */
@@ -140,29 +144,42 @@ void taskGatekeeper(void* pvParameters) {
 		}
 
 		if (xActivatedMember) {
+			/* Sets the timeout */
+			timeout = 20;
+
 			/* Takes the mutual exclusion to write into the circular buffer */
 			xSemaphoreTake(mutexTxCircBuf, portMAX_DELAY);
 
 			/* Send the message type selector */
-			while (!bsp_SerialCharPut(selector)) {
+			while (!bsp_SerialCharPut(selector) && timeout > 0) {
 				/* No space available in the circular buffer */
 				vTaskDelay(10/portTICK_PERIOD_MS);
+				timeout--;
 			}
 
 			/* Send the string to the TX output buffer */
-			while (*ptr != '\0') {
+			while (*ptr != '\0' && timeout > 0) {
 				while (!bsp_SerialCharPut(*ptr++)) {
 					/* No space available in the circular buffer */
 					vTaskDelay(10/portTICK_PERIOD_MS);
+					timeout--;
 				}
 			}
 
 			/* Send the end of the message frame */
 			for (i=0; i<sizeof(frame_end)-1; i++) {
-				while (!bsp_SerialCharPut(frame_end[i])) {
+				while (!bsp_SerialCharPut(frame_end[i]) && timeout > 0) {
 					/* No space available in the circular buffer */
 					vTaskDelay(10/portTICK_PERIOD_MS);
+					timeout--;
 				}
+			}
+
+			/* Check if there was a timeout */
+			if (timeout == 0) {
+				/* Sent the error event */
+				command.command = Marf_Serial;
+				xQueueSend(queueCommand, &command, portMAX_DELAY);
 			}
 
 			/* Release the mutual exclusion */
