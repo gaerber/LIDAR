@@ -82,7 +82,7 @@ int main(void) {
 	taskScannerInit();
 	taskDataProcessingInit();
 
-//	taskDataAcquisitionInit();
+	taskDataAcquisitionInit();
 
 	/* Start the scheduler */
 	vTaskStartScheduler();
