@@ -24,3 +24,7 @@ extern inline uint32_t tenthdegree2increments_Relative(int16_t tenthdegree);
 
 
 #endif /* INCS_AZIMUTH_H_ */
+
+/**
+ * @}
+ */

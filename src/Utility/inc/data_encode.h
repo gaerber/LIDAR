@@ -22,3 +22,7 @@ extern inline void dataEncode(int16_t azimuth, int16_t distance, char *base64);
 
 
 #endif /* DATA_ENCODE_H_ */
+
+/**
+ * @}
+ */
