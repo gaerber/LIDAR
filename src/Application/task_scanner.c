@@ -13,6 +13,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 /* RTOS */
 #include "FreeRTOS.h"
@@ -121,8 +122,14 @@ void taskScanner(void* pvParameters) {
 
 			/* Calculate the current speed */
 			process_variable = current_azimuth - last_azimuth;
-			if (process_variable < 0) {
-				process_variable += BSP_QUADENC_INC_PER_TURN;
+			if (abs(process_variable) > BSP_QUADENC_INC_PER_TURN / 2) {
+				/* Consider the restoring of the index */
+				if (process_variable < 0) {
+					process_variable += BSP_QUADENC_INC_PER_TURN;
+				}
+				else {
+					process_variable -= BSP_QUADENC_INC_PER_TURN;
+				}
 			}
 			last_azimuth = current_azimuth;
 

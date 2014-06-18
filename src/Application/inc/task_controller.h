@@ -41,7 +41,14 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define LIDAR_VERSION				"0.1A"	/*!< LIDAR versions number [string] */
+#define LIDAR_VERSION				"0.2B"	/*!< LIDAR versions number [string] */
+#define DA_AZIMUTH_MIN				-1188	/*!< Minimum azimuth [tenth degree]. */
+#define DA_AZIMUTH_MAX				1188	/*!< Maximum azimuth [tenth degree]. */
+#define DA_AZIMUTH_RES				180		/*!< Default azimuth steps [tenth degree]. */
+#define DA_AZIMUTH_CAL_DIST			-1800	/*!< Azimuth at which the distance is calibrated. */
+#define DA_AZIMUTH_CAL_RES			(DA_AZIMUTH_MAX + 2 * 18)	/*!< Azimuth at which the high speed clock is calibrated. */
+
+#define DA_DEF_SCANRATE				10		/*!< Default scan rate in scans per seconds. */
 
 
 /*
@@ -78,7 +85,6 @@ typedef struct {
 		UC_GetScan,			/*!< Get the scan configurations. */
 		UC_GetEngine,		/*!< Get the engine configurations. */
 		UC_EE,				/*!< Some magic feature. */
-		UC_Exit,			/*!< Exit the system */
 
 		/* User Command Error */
 		ErrUC_UnknownCommand,	/*!< A unknown command is received. */
@@ -87,11 +93,17 @@ typedef struct {
 		ErrUC_ArgOutOfBounds,	/*!< One or more arguments were out of the allowed bounds. */
 		ErrUC_LineOverflow,	/*!< Command line overflow detected. */
 
-		/* System malfunctions */
+		/* System component malfunctions */
 		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
 		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
 		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
-		Malf_Tdc			/*!< TDC stat register has an unexpected value. */
+		Malf_Tdc,			/*!< TDC stat register has an unexpected value. */
+		Marf_Serial,		/*!< Serial interface timeout occurs. */
+
+		/* System fault */
+		Fault_MemoryPool,	/*!< No space available in memory pool. */
+		Fault_MemoryPoolPtr,/*!< Not allowed pointer to raw data memory. */
+
 	} command;
 
 	/*! The parameters of the command/event. */

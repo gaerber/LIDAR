@@ -25,7 +25,6 @@
 #include "task_comminterp.h"
 #include "task_controller.h"
 #include "task_gatekeeper.h"
-#include "data_acquisition.h"
 
 /* BSP */
 #include "bsp_serial.h"
