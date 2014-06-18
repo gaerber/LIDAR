@@ -172,6 +172,7 @@ void taskController(void* pvParameters) {
 	char str_buffer[64];
 	dataacquisition_t data_acquisition_config;
 	uint16_t tdc_hits;
+	uint8_t hits_error;
 
 	/* Sends the welcome text */
 	event.event = Sys_Welcome;
@@ -528,6 +529,7 @@ void taskController(void* pvParameters) {
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				/* Check the type of error */
+				hits_error = 0;
 				if (event.param.gp22_stat & 0xE000) {
 					sendMessage(MSG_TYPE_STATE, "tdc eeprom malfunction");
 				}
@@ -537,21 +539,24 @@ void taskController(void* pvParameters) {
 				if (event.param.gp22_stat & 0x0400) {
 					sendMessage(MSG_TYPE_STATE, "tdc precounter timeout");
 				}
-				if (event.param.gp22_stat & 0x0200) {
-					sendMessage(MSG_TYPE_STATE, "tdc timeout");
-				}
 				/* number of hits channel 2 */
 				tdc_hits = (event.param.gp22_stat & 0x01C0) >> 6;
 				if (tdc_hits > 1) {
+					hits_error = 1;
 					sendMessage(MSG_TYPE_STATE, "tdc to many hits on CH2");
 				}
 				/* number of hits channel 1 */
 				tdc_hits = (event.param.gp22_stat & 0x0038) >> 3;
 				if (tdc_hits > 1) {
+					hits_error = 1;
 					sendMessage(MSG_TYPE_STATE, "monitor diode malfunction");
 				}
 				if (tdc_hits == 0) {
+					hits_error = 1;
 					sendMessage(MSG_TYPE_STATE, "laser diode malfunction");
+				}
+				if (hits_error == 0 && event.param.gp22_stat & 0x0200) {
+					sendMessage(MSG_TYPE_STATE, "tdc timeout");
 				}
 				break;
 
