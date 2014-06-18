@@ -100,7 +100,7 @@ void taskCommInterpInit(void) {
  * \param[in]	pvParameters task parameters. Not used.
  */
 void taskCommInterp(void* pvParameters) {
-	command_t resolved_command;
+	event_t resolved_command;
 	readcommand_t read_command;
 
 	char command[COMMAND_BUFFER_LENGTH];
@@ -192,8 +192,8 @@ void taskCommInterp(void* pvParameters) {
 								xSemaphoreGive(mutexTxCircBuf);
 							}
 							/* Send an error to the controller */
-							resolved_command.command = ErrUC_LineOverflow;
-							xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+							resolved_command.event = ErrUC_LineOverflow;
+							xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 
 							/* Exit the reading loop */
 							command_complete = -1;
@@ -234,7 +234,7 @@ void taskCommInterp(void* pvParameters) {
  */
 void* parseCommand(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 	msg_filter_t next_func;
 
 	switch (**msg) {
@@ -242,8 +242,8 @@ void* parseCommand(char **msg) {
 		case 'c':
 			if (strcmp(*msg, "cmd") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_Cmd;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_Cmd;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -253,8 +253,8 @@ void* parseCommand(char **msg) {
 		case 'd':
 			if (strcmp(*msg, "data") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_Data;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_Data;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -264,8 +264,8 @@ void* parseCommand(char **msg) {
 		case 'r':
 			if (strcmp(*msg, "reboot") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_Reboot;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_Reboot;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -295,8 +295,8 @@ void* parseCommand(char **msg) {
 		case 'e':
 			if (strcmp(*msg, "ee") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_EE;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_EE;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -306,9 +306,9 @@ void* parseCommand(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 0;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		next_func = NULL;
 	}
 
@@ -325,7 +325,7 @@ void* parseCommand(char **msg) {
  */
 void* parseCommandSet(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 	msg_filter_t next_func;
 
 	switch (**msg) {
@@ -363,9 +363,9 @@ void* parseCommandSet(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 1;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		next_func = NULL;
 	}
 
@@ -383,7 +383,7 @@ void* parseCommandSet(char **msg) {
  */
 void* parseCommandSetComm(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 
 	switch (**msg) {
 		/* set comm echo */
@@ -392,8 +392,8 @@ void* parseCommandSetComm(char **msg) {
 				/* Check the user parameters */
 				*msg += 5;
 				if (parseParamOnOff(msg, 1, &(resolved_command.param.echo))) {
-					resolved_command.command = UC_SetCommEcho;
-					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+					resolved_command.event = UC_SetCommEcho;
+					xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				}
 				success = 1;
 			}
@@ -405,8 +405,8 @@ void* parseCommandSetComm(char **msg) {
 				/* Check the user parameters */
 				*msg += 8;
 				if (parseParamOnOff(msg, 1, &(resolved_command.param.respmsg))) {
-					resolved_command.command = UC_SetCommRespmsg;
-					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+					resolved_command.event = UC_SetCommRespmsg;
+					xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				}
 				success = 1;
 			}
@@ -416,9 +416,9 @@ void* parseCommandSetComm(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 2;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 	}
 
 	/* The command must be resolved or an error occurs */
@@ -436,7 +436,7 @@ void* parseCommandSetComm(char **msg) {
  */
 void* parseCommandSetScan(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 	int32_t number1, number2;
 
 	switch (**msg) {
@@ -448,14 +448,14 @@ void* parseCommandSetScan(char **msg) {
 				if (parseParamNumber(msg, 0, &number1) && parseParamNumber(msg, 1, &number2)) {
 					/* Check if the value were in bound */
 					if (number1 >= DA_AZIMUTH_MIN && number1 < number2 && number2 <= DA_AZIMUTH_MAX) {
-						resolved_command.command = UC_SetScanBndry;
+						resolved_command.event = UC_SetScanBndry;
 						resolved_command.param.azimuth_bndry.left = (int16_t) number1;
 						resolved_command.param.azimuth_bndry.right = (int16_t) number2;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 					else {
-						resolved_command.command = ErrUC_ArgOutOfBounds;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						resolved_command.event = ErrUC_ArgOutOfBounds;
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 				}
 				success = 1;
@@ -470,13 +470,13 @@ void* parseCommandSetScan(char **msg) {
 				if (parseParamNumber(msg, 1, &number1)) {
 					/* Check if the value were in bound */
 					if (number1 >= 18 && number1 <= 3600) {
-						resolved_command.command = UC_SetScanStep;
+						resolved_command.event = UC_SetScanStep;
 						resolved_command.param.azimuth_step = (int16_t) number1;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 					else {
-						resolved_command.command = ErrUC_ArgOutOfBounds;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						resolved_command.event = ErrUC_ArgOutOfBounds;
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 				}
 				success = 1;
@@ -491,13 +491,13 @@ void* parseCommandSetScan(char **msg) {
 				if (parseParamNumber(msg, 1, &number1)) {
 					/* Check if the value were in bound */
 					if (number1 > 0 && number1 <= 10) {
-						resolved_command.command = UC_SetScanRate;
+						resolved_command.event = UC_SetScanRate;
 						resolved_command.param.scan_rate = number1;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 					else {
-						resolved_command.command = ErrUC_ArgOutOfBounds;
-						xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+						resolved_command.event = ErrUC_ArgOutOfBounds;
+						xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 					}
 				}
 				success = 1;
@@ -508,9 +508,9 @@ void* parseCommandSetScan(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 2;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 	}
 
 	/* The command must be resolved or an error occurs */
@@ -528,7 +528,7 @@ void* parseCommandSetScan(char **msg) {
  */
 void* parseCommandSetEngine(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 	int32_t number;
 
 	switch (**msg) {
@@ -540,13 +540,13 @@ void* parseCommandSetEngine(char **msg) {
 				if (parseParamNumber(msg, 1, &number)) {
 					/* Check if the value were in bound */
 					if (number > 0 && number <= 5000) {
-					resolved_command.command = UC_SetEngineSleep;
+					resolved_command.event = UC_SetEngineSleep;
 					resolved_command.param.engine_sleep = number;
-					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+					xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				}
 				else {
-					resolved_command.command = ErrUC_ArgOutOfBounds;
-					xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+					resolved_command.event = ErrUC_ArgOutOfBounds;
+					xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				}
 				}
 				success = 1;
@@ -557,9 +557,9 @@ void* parseCommandSetEngine(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 2;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 	}
 
 	/* The command must be resolved or an error occurs */
@@ -575,7 +575,7 @@ void* parseCommandSetEngine(char **msg) {
  */
 void* parseCommandGet(char **msg) {
 	uint8_t success = 0;
-	command_t resolved_command;
+	event_t resolved_command;
 	msg_filter_t next_func;
 
 	switch (**msg) {
@@ -583,8 +583,8 @@ void* parseCommandGet(char **msg) {
 		case 'a':
 			if (strcmp(*msg, "all") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_GetAll;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_GetAll;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -594,8 +594,8 @@ void* parseCommandGet(char **msg) {
 		case 'v':
 			if (strcmp(*msg, "ver") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_GetVer;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_GetVer;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -605,8 +605,8 @@ void* parseCommandGet(char **msg) {
 		case 'c':
 			if (strcmp(*msg, "comm") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_GetComm;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_GetComm;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -616,8 +616,8 @@ void* parseCommandGet(char **msg) {
 		case 's':
 			if (strcmp(*msg, "scan") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_GetScan;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_GetScan;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -627,8 +627,8 @@ void* parseCommandGet(char **msg) {
 		case 'e':
 			if (strcmp(*msg, "engine") == 0) {
 				/* Send command to the controller */
-				resolved_command.command = UC_GetEngine;
-				xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+				resolved_command.event = UC_GetEngine;
+				xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 				next_func = NULL;
 				success = 1;
 			}
@@ -638,9 +638,9 @@ void* parseCommandGet(char **msg) {
 	/* Check if the command was correct */
 	if (success == 0) {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_UnknownCommand;
+		resolved_command.event = ErrUC_UnknownCommand;
 		resolved_command.param.error_level = 1;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		next_func = NULL;
 	}
 
@@ -658,7 +658,7 @@ void* parseCommandGet(char **msg) {
  */
 uint8_t parseParamOnOff(char **msg, uint8_t param_end, uint8_t *param) {
 	uint8_t success = 1;
-	command_t resolved_command;
+	event_t resolved_command;
 
 	/* Check if it is on ... */
 	if (strncmp(*msg, "on", 2) == 0) {
@@ -673,15 +673,15 @@ uint8_t parseParamOnOff(char **msg, uint8_t param_end, uint8_t *param) {
 	/* Only this two parameters are allowed */
 	else {
 		/* Send the error message to the controller */
-		resolved_command.command = ErrUC_FaultArgType;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		resolved_command.event = ErrUC_FaultArgType;
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		success = 0;
 	}
 
 	/* Check the number of arguments */
 	if (success && ((param_end && **msg != '\0') || (!param_end && **msg != ' '))) {
-		resolved_command.command = ErrUC_TooFewArgs;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		resolved_command.event = ErrUC_TooFewArgs;
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		success = 0;
 	}
 
@@ -699,7 +699,7 @@ uint8_t parseParamOnOff(char **msg, uint8_t param_end, uint8_t *param) {
  */
 uint8_t parseParamNumber(char **msg, uint8_t param_end, int32_t *param) {
 	uint8_t success = 1;
-	command_t resolved_command;
+	event_t resolved_command;
 	uint8_t digits = 0;
 	uint8_t negative_sign = 0;
 
@@ -721,23 +721,23 @@ uint8_t parseParamNumber(char **msg, uint8_t param_end, int32_t *param) {
 		}
 		else {
 			/* Fault argument type */
-			resolved_command.command = ErrUC_FaultArgType;
-			xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+			resolved_command.event = ErrUC_FaultArgType;
+			xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 			success = 0;
 		}
 	}
 
 	/* Overflow protection */
 	if (digits > 9) {
-		resolved_command.command = ErrUC_ArgOutOfBounds;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		resolved_command.event = ErrUC_ArgOutOfBounds;
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		success = 0;
 	}
 
 	/* Check the number of arguments */
 	if (success && ((param_end && **msg != '\0') || (!param_end && **msg != ' '))) {
-		resolved_command.command = ErrUC_TooFewArgs;
-		xQueueSend(queueCommand, &resolved_command, portMAX_DELAY);
+		resolved_command.event = ErrUC_TooFewArgs;
+		xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
 		success = 0;
 	}
 	else {

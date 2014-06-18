@@ -96,9 +96,10 @@ void triggerMalfunctionLed(void);
 TaskHandle_t taskControllerHandle;
 
 /**
- * \brief	Queue with the received and resolved commands from the user.
+ * \brief	Queue with the received and resolved commands from the user and all
+ * 			other system message/malfunction.
  */
-QueueHandle_t queueCommand;
+QueueHandle_t queueEvent;
 
 
 /*
@@ -155,7 +156,7 @@ void taskControllerInit(void) {
 			NULL, TASK_CONTROLLER_PRIORITY, &taskControllerHandle);
 
 	/* Generate the queue */
-	queueCommand = xQueueCreate(Q_COMMAND_LENGTH, sizeof(command_t));
+	queueEvent = xQueueCreate(Q_COMMAND_LENGTH, sizeof(event_t));
 
 	/* Generate the timer */
 	timerMalfunctionLed = xTimerCreate("Malf LED", 3000/portTICK_PERIOD_MS,
@@ -167,26 +168,26 @@ void taskControllerInit(void) {
  * \param[in]	pvParameters task parameters. Not used.
  */
 void taskController(void* pvParameters) {
-	command_t command;
+	event_t event;
 	char str_buffer[64];
 	dataacquisition_t data_acquisition_config;
 	uint16_t tdc_hits;
 
 	/* Sends the welcome text */
-	command.command = Sys_Welcome;
-	xQueueSend(queueCommand, &command, portMAX_DELAY);
+	event.event = Sys_Welcome;
+	xQueueSend(queueEvent, &event, portMAX_DELAY);
 
 	/* initialize the system */
-	command.command = Sys_Init;
-	xQueueSend(queueCommand, &command, portMAX_DELAY);
+	event.event = Sys_Init;
+	xQueueSend(queueEvent, &event, portMAX_DELAY);
 
 	/* Loop forever */
 	for (;;) {
 		/* Wait for an event */
-		if (xQueueReceive(queueCommand, &command, 100) == pdTRUE) {
+		if (xQueueReceive(queueEvent, &event, 100) == pdTRUE) {
 
-			/* Resolve the command */
-			switch (command.command) {
+			/* Resolve the event */
+			switch (event.event) {
 
 			/* Initialize the system. Called after the system start */
 			case Sys_Init:
@@ -279,8 +280,8 @@ void taskController(void* pvParameters) {
 			case UC_SetCommEcho:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.comm_echo = command.param.echo;
-					g_systemState.readcommand = command.param.echo;
+					g_systemState.comm_echo = event.param.echo;
+					g_systemState.readcommand = event.param.echo;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -294,7 +295,7 @@ void taskController(void* pvParameters) {
 			case UC_SetCommRespmsg:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.comm_respmsg = command.param.respmsg;
+					g_systemState.comm_respmsg = event.param.respmsg;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -308,10 +309,8 @@ void taskController(void* pvParameters) {
 			case UC_SetScanBndry:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.scan_bndry_left = command.param.azimuth_bndry.left;
-					g_systemState.scan_bndry_right = command.param.azimuth_bndry.right;
-//					g_systemState.azimuth_left = tenthdegree2increments(command.param.azimuth_bndry.left);
-//					g_systemState.azimuth_right = tenthdegree2increments(command.param.azimuth_bndry.right);
+					g_systemState.scan_bndry_left = event.param.azimuth_bndry.left;
+					g_systemState.scan_bndry_right = event.param.azimuth_bndry.right;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -325,8 +324,7 @@ void taskController(void* pvParameters) {
 			case UC_SetScanStep:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.scan_step = command.param.azimuth_step;
-//					g_systemState.azimuth_res = tenthdegree2increments_Relative(command.param.azimuth_step);
+					g_systemState.scan_step = event.param.azimuth_step;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -340,8 +338,7 @@ void taskController(void* pvParameters) {
 			case UC_SetScanRate:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.scan_rate = command.param.scan_rate;
-//					g_systemState.engine_speed = command.param.scan_rate * (BSP_QUADENC_INC_PER_TURN+1) / (1000*ENGINE_CONTROLER_TA);
+					g_systemState.scan_rate = event.param.scan_rate;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -355,7 +352,7 @@ void taskController(void* pvParameters) {
 			case UC_SetEngineSleep:
 				if (g_systemState.state == MODE_CMD) {
 					/* Change the system state */
-					g_systemState.engine_sleep = command.param.engine_sleep;
+					g_systemState.engine_sleep = event.param.engine_sleep;
 
 					/* Send the acknowledge to the user */
 					sendMessage(MSG_TYPE_RSP, "00 aok");
@@ -377,7 +374,7 @@ void taskController(void* pvParameters) {
 				}
 
 				/* Execute all get cases */
-				if (command.command != UC_GetAll) {
+				if (event.event != UC_GetAll) {
 					/* Read the next user command */
 					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 					break;
@@ -396,7 +393,7 @@ void taskController(void* pvParameters) {
 				}
 
 				/* Execute all get cases */
-				if (command.command != UC_GetAll) {
+				if (event.event != UC_GetAll) {
 					/* Read the next user command */
 					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 					break;
@@ -419,7 +416,7 @@ void taskController(void* pvParameters) {
 				}
 
 				/* Execute all get cases */
-				if (command.command != UC_GetAll) {
+				if (event.event != UC_GetAll) {
 					/* Read the next user command */
 					xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 					break;
@@ -449,7 +446,7 @@ void taskController(void* pvParameters) {
 
 			/* A unknown command is received */
 			case ErrUC_UnknownCommand:
-				sprintf(str_buffer, "%d unknown command", 11 + command.param.error_level);
+				sprintf(str_buffer, "%d unknown command", 11 + event.param.error_level);
 				sendMessage(MSG_TYPE_RSP, str_buffer);
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
@@ -531,25 +528,25 @@ void taskController(void* pvParameters) {
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				/* Check the type of error */
-				if (command.param.gp22_stat & 0xE000) {
+				if (event.param.gp22_stat & 0xE000) {
 					sendMessage(MSG_TYPE_STATE, "tdc eeprom malfunction");
 				}
-				if (command.param.gp22_stat & 0x1800) {
+				if (event.param.gp22_stat & 0x1800) {
 					sendMessage(MSG_TYPE_STATE, "tdc temperature sensor malfunction");
 				}
-				if (command.param.gp22_stat & 0x0400) {
+				if (event.param.gp22_stat & 0x0400) {
 					sendMessage(MSG_TYPE_STATE, "tdc precounter timeout");
 				}
-				if (command.param.gp22_stat & 0x0200) {
+				if (event.param.gp22_stat & 0x0200) {
 					sendMessage(MSG_TYPE_STATE, "tdc timeout");
 				}
 				/* number of hits channel 2 */
-				tdc_hits = (command.param.gp22_stat & 0x01C0) >> 6;
+				tdc_hits = (event.param.gp22_stat & 0x01C0) >> 6;
 				if (tdc_hits > 1) {
 					sendMessage(MSG_TYPE_STATE, "tdc to many hits on CH2");
 				}
 				/* number of hits channel 1 */
-				tdc_hits = (command.param.gp22_stat & 0x0038) >> 3;
+				tdc_hits = (event.param.gp22_stat & 0x0038) >> 3;
 				if (tdc_hits > 1) {
 					sendMessage(MSG_TYPE_STATE, "monitor diode malfunction");
 				}

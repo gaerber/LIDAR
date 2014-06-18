@@ -58,7 +58,7 @@
  */
 
 /**
- * \brief	Data type of the queueCommand. It is a structure with the command
+ * \brief	Data type of the queueEvent. It is a structure with the events
  * 			and the new parameters.
  */
 typedef struct {
@@ -104,7 +104,7 @@ typedef struct {
 		Fault_MemoryPool,	/*!< No space available in memory pool. */
 		Fault_MemoryPoolPtr,/*!< Not allowed pointer to raw data memory. */
 
-	} command;
+	} event;
 
 	/*! The parameters of the command/event. */
 	union {
@@ -123,7 +123,7 @@ typedef struct {
 		/* System malfunction parameters */
 		uint16_t gp22_stat;	/*!< State register of the GP22. */
 	} param;
-} command_t;
+} event_t;
 
 
 /*
@@ -132,7 +132,7 @@ typedef struct {
  * ----------------------------------------------------------------------------
  */
 extern TaskHandle_t taskControllerHandle;
-extern QueueHandle_t queueCommand;
+extern QueueHandle_t queueEvent;
 
 
 /*

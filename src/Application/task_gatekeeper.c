@@ -117,7 +117,7 @@ void taskGatekeeper(void* pvParameters) {
 	uint32_t i;
 	static const char frame_end[] = MSG_FRAME_END;
 
-	command_t command;
+	event_t event;
 	uint32_t timeout;
 
 	/* Loop forever */
@@ -178,8 +178,8 @@ void taskGatekeeper(void* pvParameters) {
 			/* Check if there was a timeout */
 			if (timeout == 0) {
 				/* Sent the error event */
-				command.command = Marf_Serial;
-				xQueueSend(queueCommand, &command, portMAX_DELAY);
+				event.event = Marf_Serial;
+				xQueueSend(queueEvent, &event, portMAX_DELAY);
 			}
 
 			/* Release the mutual exclusion */

@@ -144,12 +144,12 @@ void engineStandByCallback(TimerHandle_t xTimer) {
  * 			failure from a ISR function.
  */
 void bsp_QuadencRoterrorHook(void) {
-	command_t command;
+	event_t event;
 	BaseType_t xTaskWoken = pdFALSE;
 
 	/* Sends the failure to the controller */
-	command.command = Malf_QuadEnc;
-	xQueueSendFromISR(queueCommand, &command, &xTaskWoken);
+	event.event = Malf_QuadEnc;
+	xQueueSendFromISR(queueEvent, &event, &xTaskWoken);
 
 	/* Check if a higher prior task is woken up */
 	portEND_SWITCHING_ISR(xTaskWoken);
@@ -204,7 +204,7 @@ void taskDataAcquisition(void* pvParameters) {
 	dataacquisition_t settings;
 	speed_t engine_speed;
 
-	command_t command;
+	event_t event;
 
 	uint8_t laser_flag;
 	uint8_t laser_flag_last = 1;
@@ -270,8 +270,8 @@ void taskDataAcquisition(void* pvParameters) {
 
 		/* Check if a overcurrent is ocured */
 		if (!laser_flag && laser_flag_last) {
-			command.command = Malf_LaserDriver;
-			if (xQueueSend(queueCommand, &command, 0) == pdTRUE) {
+			event.event = Malf_LaserDriver;
+			if (xQueueSend(queueEvent, &event, 0) == pdTRUE) {
 				laser_flag_last = laser_flag;
 			}
 			/* If queue is full, wait for an other check cycle */
@@ -285,8 +285,8 @@ void taskDataAcquisition(void* pvParameters) {
 
 		/* Check if a overcurrent is ocured */
 		if (!engine_flag && engine_flag_last) {
-			command.command = Malf_EngineDriver;
-			if (xQueueSend(queueCommand, &command, 0) == pdTRUE) {
+			event.event = Malf_EngineDriver;
+			if (xQueueSend(queueEvent, &event, 0) == pdTRUE) {
 				engine_flag_last = engine_flag;
 			}
 			/* If queue is full, wait for an other check cycle */
@@ -386,7 +386,7 @@ void tdcHighSpeedCalibrationHandler(void) {
  */
 void azimuthMeasurementHandler(uint32_t azimuth) {
 	uint32_t next_azimuth;
-	command_t error_command;
+	event_t error_event;
 	BaseType_t xTaskWoken = pdFALSE;
 
 	/* Check if it is enabled */
@@ -424,8 +424,8 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 		}
 		else {
 			/* Send an error message to the controller */
-			error_command.command = Fault_MemoryPool;
-			xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+			error_event.event = Fault_MemoryPool;
+			xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 		}
 	}
 	else {
@@ -442,7 +442,7 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
  */
 void tdcMeasurementHandler(void) {
 	uint32_t result;
-	command_t error_command;
+	event_t error_event;
 	BaseType_t xTaskWoken = pdFALSE;
 
 	/* Check the pointer */
@@ -454,8 +454,8 @@ void tdcMeasurementHandler(void) {
 	}
 	else {
 		/* Send error event */
-		error_command.command = Fault_MemoryPoolPtr;
-		xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+		error_event.event = Fault_MemoryPoolPtr;
+		xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 	}
 
 	/* Check if a higher prior task is woken up */
@@ -468,7 +468,7 @@ void tdcMeasurementHandler(void) {
  */
 void laserEndSequenceHandler(void) {
 	uint32_t stat;
-	command_t error_command;
+	event_t error_event;
 	BaseType_t xTaskWoken = pdFALSE;
 
 	/* Check the pointer */
@@ -481,9 +481,9 @@ void laserEndSequenceHandler(void) {
 			 * Stat is 0x0208 if a timeout occurs due to missing reflection */
 			if (!(stat == 0x0000 || (stat&0xFFF8) == 0x0208)) {
 				/* Error occurs */
-				error_command.command = Malf_Tdc;
-				error_command.param.gp22_stat = stat;
-				xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+				error_event.event = Malf_Tdc;
+				error_event.param.gp22_stat = stat;
+				xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 			}
 		}
 
@@ -494,9 +494,9 @@ void laserEndSequenceHandler(void) {
 		}
 		else {
 			/* Send an error event with the value of the state register */
-			error_command.command = Malf_Tdc;
-			error_command.param.gp22_stat = stat;
-			xQueueSendFromISR(queueCommand, &error_command, &xTaskWoken);
+			error_event.event = Malf_Tdc;
+			error_event.param.gp22_stat = stat;
+			xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 		}
 	}
 
