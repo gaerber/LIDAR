@@ -44,8 +44,9 @@
 #define LIDAR_VERSION				"0.2B"	/*!< LIDAR versions number [string] */
 #define DA_AZIMUTH_MIN				-1188	/*!< Minimum azimuth [tenth degree]. */
 #define DA_AZIMUTH_MAX				1188	/*!< Maximum azimuth [tenth degree]. */
-#define DA_AZIMUTH_RES				180		/*!< Default azimuth steps [tenth degree]. */
+#define DA_AZIMUTH_RES				18		/*!< Default azimuth steps [tenth degree]. */
 #define DA_AZIMUTH_CAL_DIST			-1800	/*!< Azimuth at which the distance is calibrated. */
+#define DA_DISTANCE_CAL				200		/*!< Distance to the reference mark for the distance is calibration. */
 #define DA_AZIMUTH_CAL_RES			(DA_AZIMUTH_MAX + 2 * 18)	/*!< Azimuth at which the high speed clock is calibrated. */
 
 #define DA_DEF_SCANRATE				10		/*!< Default scan rate in scans per seconds. */
