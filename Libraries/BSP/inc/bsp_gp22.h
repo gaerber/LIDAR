@@ -46,7 +46,8 @@ typedef void (*bsp_gp22callback_t)(void);
 #define BSP_GP22_REG5		0x10000000		/*!< TDC-GP22 register 5 configuration */
 #define BSP_GP22_REG6		0x00000000		/*!< TDC-GP22 register 6 configuration */
 
-#define BSP_GP22_RESONATOR	(2*32768)		/*!< Frequency of the calibration resonator [Hz]. */
+#define BSP_GP22_RESONATOR	32768.0			/*!< Frequency of the calibration resonator [Hz]. */
+#define BSP_GP22_RESONATOR_CYCLE	2.0		/*!< Number of cycles while resonator calibration. */
 #define BSP_GP22_HS_CRYSTAL	4000000.0		/*!< Frequency of the high speed crystal [Hz]. */
 
 /*

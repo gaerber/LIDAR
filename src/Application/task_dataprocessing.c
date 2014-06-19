@@ -40,6 +40,7 @@
  * ----------------------------------------------------------------------------
  */
 void taskDataProcessing(void* pvParameters);
+uint32_t maxValue(uint32_t *data, uint32_t length);
 
 
 /*
@@ -113,7 +114,7 @@ void taskDataProcessing(void* pvParameters) {
 
 	char room_map_point[DATA_MESSAGE_STRING_LENGTH];
 
-	double time, distance;
+	double propagation_delay, distance, distance_mm_double;
 
 	/* Loop forever */
 	for (;;) {
@@ -121,17 +122,24 @@ void taskDataProcessing(void* pvParameters) {
 		if (xQueueReceive(queueRawDataPtr, &raw_data, portMAX_DELAY) == pdTRUE) {
 			/* Calculate the new calibration factor if necessary */
 			if (raw_data->cal_resonator != current_cal_resonator) {
-				cal_resonator_factor = (1.0 / BSP_GP22_RESONATOR) / (2.0 * (raw_data->cal_resonator / (double) 0xFFFF));
+				cal_resonator_factor = (BSP_GP22_RESONATOR_CYCLE / BSP_GP22_RESONATOR) / (1.0 / BSP_GP22_HS_CRYSTAL * raw_data->cal_resonator / (double) 0xFFFF);
 				current_cal_resonator = raw_data->cal_resonator;
 			}
 
-			/* Calculate the mean value */
-			mean_value = 0.0;
-			for (i=0; i<raw_data->raw_ctr; i++) {
-				mean_value += raw_data->raw[i];
+			if (raw_data->raw_ctr > raw_data->expected_points / 2) {
+				/* Calculate the mean value */
+				mean_value = 0.0;
+				for (i=0; i<raw_data->raw_ctr; i++) {
+					mean_value += raw_data->raw[i];
+				}
+				mean_value += (raw_data->expected_points - raw_data->raw_ctr) * maxValue(raw_data->raw, raw_data->raw_ctr);
+				mean_value = mean_value / raw_data->expected_points;
+//				mean_value = mean_value / raw_data->raw_ctr;
 			}
-			mean_value += (raw_data->expected_points - raw_data->raw_ctr) * 0x7FFFFFFF;
-			mean_value = mean_value / raw_data->expected_points;
+			else {
+				/* Set the maximum value */
+				mean_value = 0x7FFFFFFF;
+			}
 
 			/* Calculate the azimuth [tenth degree] */
 			azimuth = increments2tenthdegree(raw_data->increments);
@@ -140,20 +148,28 @@ void taskDataProcessing(void* pvParameters) {
 			eMemGiveBlock(&memRawData, raw_data);
 
 			/* Calculate the distance */
-			time = (mean_value / (double) 0xFFFF) * cal_resonator_factor * (1.0 / BSP_GP22_HS_CRYSTAL);
-			distance = VERILOG_OF_LIGHT / 2.0 * time;
+			propagation_delay = (mean_value / (double) 0xFFFF) * cal_resonator_factor * (1.0 / BSP_GP22_HS_CRYSTAL);
+			distance = VERILOG_OF_LIGHT / 2.0 * propagation_delay;
 
-			//todo DEMO
-			distance = distance - 22.0;
+			//DEMO
+			distance_mm_double = 100 * distance;
 
-			distance_mm = 1000 * distance;
+			/* Check a distance overflow */
+			if (distance_mm_double > (double) 0xFFF) {
+				/* Set the maximum value */
+				distance_mm_double = (double) 0xFFF;
+			}
+
+			distance_mm = distance_mm_double;
 
 			if (azimuth == DA_AZIMUTH_CAL_DIST) {
 				/* Set the new calibration offset */
-				distance_offset_mm = distance_mm;
+				distance_offset_mm = distance_mm - DA_DISTANCE_CAL;
 			}
 			else {
-				distance_mm = distance_mm - distance_offset_mm;
+				if (distance_mm != 0xFFF) {
+					distance_mm = distance_mm - distance_offset_mm;
+				}
 
 				/* Encode the data of the point of the room map */
 				dataEncode(azimuth, distance_mm, room_map_point);
@@ -165,6 +181,19 @@ void taskDataProcessing(void* pvParameters) {
 	}
 
 	/* Never reach this point */
+}
+
+uint32_t maxValue(uint32_t *data, uint32_t length) {
+	uint32_t i;
+	uint32_t max_value = 0;
+
+	for (i=0; i<length; i++) {
+		if (max_value < data[i]) {
+			max_value = data[i];
+		}
+	}
+
+	return max_value;
 }
 
 
