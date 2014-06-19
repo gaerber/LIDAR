@@ -241,10 +241,6 @@ void taskDataAcquisition(void* pvParameters) {
 				bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
 				bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 
-				//DEMO
-				bsp_QuadencPosCallback(azimuthMeasurementHandler);
-				bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
-
 			}
 			else {
 				/* Stops the data acquisition */
@@ -311,41 +307,41 @@ void taskDataAcquisition(void* pvParameters) {
  * \param[in]	azimuth is the current azimuth, which called the interrupt.
  */
 void azimuthTDCCalibrationHandler(uint32_t azimuth) {
-//	uint32_t reg;
-//
-//	/* Check if it is enabled */
-//	if (g_settings.enable) {
+	uint32_t reg;
+
+	/* Check if it is enabled */
+	if (g_configs.enable) {
 		/* Configure the next step: Propagation delay calibration */
 		bsp_QuadencPosCallback(azimuthMeasurementHandler);
 		bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_DIST));
-//
-//#if (BSP_GP22_REG0 & (1<<13))
-//		/* Disable the automatic calibration calculation on the TDC */
-//		reg = BSP_GP22_REG0 & (~(1<<13));
-//		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
-//#endif
-//
-//#if (BSP_GP22_REG1 & (1<<23))
-//		/* Disable the fast init feature */
-//		reg = BSP_GP22_REG1 & (~(1<<23));
-//		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
-//#endif
-//
-//#if (!((BSP_GP22_REG2 & (1<<31)) && (BSP_GP22_REG2 & (1<<29))))
-//		/* Set the TDC interrupt source to TDC timeout and ALU interrupt */
-//		reg = BSP_GP22_REG2 | (1<<31) | (1<<29);
-//		bsp_GP22RegWrite(GP22_WR_REG_2, reg);
-//#endif
-//
-//		/* Starts a calibration measurement for the high speed clock */
-//		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
-//		bsp_GP22SendOpcode(GP22_OP_Init);
-//		bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
-//	}
-//	else {
-//		/* Data acquisition disable */
-//		bsp_QuadencPosCallback(NULL);
-//	}
+
+#if (BSP_GP22_REG0 & (1<<13))
+		/* Disable the automatic calibration calculation on the TDC */
+		reg = BSP_GP22_REG0 & (~(1<<13));
+		bsp_GP22RegWrite(GP22_WR_REG_0, reg);
+#endif
+
+#if (BSP_GP22_REG1 & (1<<23))
+		/* Disable the fast init feature */
+		reg = BSP_GP22_REG1 & (~(1<<23));
+		bsp_GP22RegWrite(GP22_WR_REG_1, reg);
+#endif
+
+#if (!((BSP_GP22_REG2 & (1<<31)) && (BSP_GP22_REG2 & (1<<29))))
+		/* Set the TDC interrupt source to TDC timeout and ALU interrupt */
+		reg = BSP_GP22_REG2 | (1<<31) | (1<<29);
+		bsp_GP22RegWrite(GP22_WR_REG_2, reg);
+#endif
+
+		/* Starts a calibration measurement for the high speed clock */
+		bsp_GP22IntCallback(tdcHighSpeedCalibrationHandler);
+		bsp_GP22SendOpcode(GP22_OP_Init);
+		bsp_GP22SendOpcode(GP22_OP_Start_Cal_Resonator);
+	}
+	else {
+		/* Data acquisition disable */
+		bsp_QuadencPosCallback(NULL);
+	}
 }
 
 /**
