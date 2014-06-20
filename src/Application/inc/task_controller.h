@@ -51,6 +51,9 @@
 
 #define DA_DEF_SCANRATE				10		/*!< Default scan rate in scans per seconds. */
 
+#define LED_MALFUNCTION				BSP_LED_RED		/*!< LED indicates a malfunction. */
+#define LED_LASER_OPERATION			BSP_LED_BLUE	/*!< LED indicates the laser is operating. */
+
 
 /*
  * ----------------------------------------------------------------------------

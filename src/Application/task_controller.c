@@ -28,6 +28,7 @@
 #include "task_gatekeeper.h"
 #include "task_comminterp.h"
 #include "task_scanner.h"
+#include "task_ee.h"
 
 /* BSP */
 #include "bsp_led.h"
@@ -82,6 +83,7 @@ void systemCheckCallback(TimerHandle_t xTimer);
 void taskController(void* pvParameters);
 void sendMessage(char msg_typw, const char* msg);
 void triggerMalfunctionLed(void);
+void stopDataAcquisition(void);
 
 
 /*
@@ -133,7 +135,7 @@ system_t g_systemState;
  */
 void MalfLedCallback(TimerHandle_t xTimer) {
 	/* Reset the error LED */
-	bsp_LedSetOff(BSP_LED_RED);
+	bsp_LedSetOff(LED_MALFUNCTION);
 }
 
 
@@ -149,7 +151,7 @@ void MalfLedCallback(TimerHandle_t xTimer) {
 void taskControllerInit(void) {
 
 	/* Initialize the LEDs */
-//	bsp_LedInit();
+	bsp_LedInit();
 
 	/* Generate the task */
 	xTaskCreate(taskController, TASK_CONTROLLER_NAME, TASK_CONTROLLER_STACKSIZE,
@@ -160,7 +162,7 @@ void taskControllerInit(void) {
 
 	/* Generate the timer */
 	timerMalfunctionLed = xTimerCreate("Malf LED", 3000/portTICK_PERIOD_MS,
-			pdFALSE, (void*)BSP_LED_RED, MalfLedCallback);
+			pdFALSE, (void*)LED_MALFUNCTION, MalfLedCallback);
 }
 
 /**
@@ -232,6 +234,9 @@ void taskController(void* pvParameters) {
 					g_systemState.readcommand = g_systemState.comm_echo;
 				}
 
+				/* Reset the LED */
+				bsp_LedSetOff(LED_LASER_OPERATION);
+
 				/* Send the response message */
 				sendMessage(MSG_TYPE_STATE, "cmd");
 
@@ -253,6 +258,9 @@ void taskController(void* pvParameters) {
 					data_acquisition_config.param.scan.step = g_systemState.scan_step;
 					data_acquisition_config.param.scan.rate = g_systemState.scan_rate;
 					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+					/* Set the LED */
+					bsp_LedSetOn(LED_LASER_OPERATION);
 
 					/* Send the response message */
 					sendMessage(MSG_TYPE_STATE, "data");
@@ -437,9 +445,12 @@ void taskController(void* pvParameters) {
 
 			/* todo last: Some magic feature */
 			case UC_EE:
-//				triggerMalfunctionLed();
+				triggerMalfunctionLed();
+				stopDataAcquisition();
 //				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
-				bsp_LaserPulse(7);
+//				bsp_LaserPulse(7);
+
+				taskEEInit();
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -485,15 +496,8 @@ void taskController(void* pvParameters) {
 
 			/* Engine overcurrent or thermal shutdown */
 			case Malf_EngineDriver:
-				if (g_systemState.state == MODE_DATA) {
-					/* Stop the data acquisition */
-					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
-					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
-					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
-
-					/* Change the state */
-					g_systemState.state = MODE_CMD;
-				}
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
@@ -502,15 +506,8 @@ void taskController(void* pvParameters) {
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
-				if (g_systemState.state == MODE_DATA) {
-					/* Stop the data acquisition */
-					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
-					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
-					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
-
-					/* Change the state */
-					g_systemState.state = MODE_CMD;
-				}
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
@@ -526,44 +523,56 @@ void taskController(void* pvParameters) {
 
 			/* TDC stat register has an unexpected value */
 			case Malf_Tdc:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
 				/* Check the type of error */
 				hits_error = 0;
 				if (event.param.gp22_stat & 0xE000) {
 					sendMessage(MSG_TYPE_STATE, "tdc eeprom malfunction");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
 				if (event.param.gp22_stat & 0x1800) {
 					sendMessage(MSG_TYPE_STATE, "tdc temperature sensor malfunction");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
 				if (event.param.gp22_stat & 0x0400) {
 					sendMessage(MSG_TYPE_STATE, "tdc precounter timeout");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
 				/* number of hits channel 2 */
 				tdc_hits = (event.param.gp22_stat & 0x01C0) >> 6;
 				if (tdc_hits > 1) {
 					hits_error = 1;
-					sendMessage(MSG_TYPE_STATE, "tdc to many hits on CH2");
+					//sendMessage(MSG_TYPE_STATE, "receiver malfunction");
 				}
 				/* number of hits channel 1 */
 				tdc_hits = (event.param.gp22_stat & 0x0038) >> 3;
 				if (tdc_hits > 1) {
 					hits_error = 1;
-					sendMessage(MSG_TYPE_STATE, "monitor diode malfunction");
+					sendMessage(MSG_TYPE_STATE, "monitor malfunction");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
 				if (tdc_hits == 0) {
 					hits_error = 1;
 					sendMessage(MSG_TYPE_STATE, "laser diode malfunction");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
 				if (hits_error == 0 && event.param.gp22_stat & 0x0200) {
+					hits_error = 1;
 					sendMessage(MSG_TYPE_STATE, "tdc timeout");
+					/* Trigger the error LED */
+					triggerMalfunctionLed();
 				}
+
 				break;
 
 			/* Serial interface timeout occurs */
 			case Marf_Serial:
 				/* Sets the LED forever */
-				bsp_LedSetOn(BSP_LED_RED);
+				bsp_LedSetOn(LED_MALFUNCTION);
 				/* Error message is not possible due the malfunction in the gatekeeper */
 
 				/* Disable all interrupts */
@@ -576,15 +585,8 @@ void taskController(void* pvParameters) {
 
 			/* No space available in memory pool */
 			case Fault_MemoryPool:
-				if (g_systemState.state == MODE_DATA) {
-					/* Stop the data acquisition */
-					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
-					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
-					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
-
-					/* Change the state */
-					g_systemState.state = MODE_CMD;
-				}
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
@@ -593,15 +595,8 @@ void taskController(void* pvParameters) {
 
 			/* Not allowed pointer to raw data memory */
 			case Fault_MemoryPoolPtr:
-				if (g_systemState.state == MODE_DATA) {
-					/* Stop the data acquisition */
-					data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
-					data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
-					xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
-
-					/* Change the state */
-					g_systemState.state = MODE_CMD;
-				}
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
@@ -653,7 +648,27 @@ void triggerMalfunctionLed(void) {
 	xTimerStart(timerMalfunctionLed, portMAX_DELAY);
 
 	/* Set the LED */
-	bsp_LedSetOn(BSP_LED_RED);
+	bsp_LedSetOn(LED_MALFUNCTION);
+}
+
+/**
+ * \brief	Stops the data acquisition after a malfunction.
+ */
+void stopDataAcquisition(void) {
+	dataacquisition_t data_acquisition_config;
+
+	if (g_systemState.state == MODE_DATA) {
+		/* Stop the data acquisition */
+		data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+		data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
+		xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+
+		/* Change the state */
+		g_systemState.state = MODE_CMD;
+
+		/* Reset the LED */
+		bsp_LedSetOff(LED_LASER_OPERATION);
+	}
 }
 
 
