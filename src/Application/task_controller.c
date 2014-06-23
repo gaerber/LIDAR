@@ -450,7 +450,7 @@ void taskController(void* pvParameters) {
 //				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 //				bsp_LaserPulse(7);
 
-				taskEEInit();
+//				taskEEInit();
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -503,6 +503,16 @@ void taskController(void* pvParameters) {
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "engine driver malfunction");
 			break;
+
+			/* Engine controller timeout */
+			case Malf_Engine:
+				/* Stop the data acquisition */
+				stopDataAcquisition();
+
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "eingine is blocked");
+				break;
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
@@ -668,6 +678,9 @@ void stopDataAcquisition(void) {
 
 		/* Reset the LED */
 		bsp_LedSetOff(LED_LASER_OPERATION);
+
+		/* Send the new state */
+		sendMessage(MSG_TYPE_STATE, "cmd");
 	}
 }
 

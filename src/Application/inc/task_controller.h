@@ -46,10 +46,10 @@
 #define DA_AZIMUTH_MAX				1188	/*!< Maximum azimuth [tenth degree]. */
 #define DA_AZIMUTH_RES				18		/*!< Default azimuth steps [tenth degree]. */
 #define DA_AZIMUTH_CAL_DIST			-1800	/*!< Azimuth at which the distance is calibrated. */
-#define DA_DISTANCE_CAL				200		/*!< Distance to the reference mark for the distance is calibration. */
+#define DA_DISTANCE_CAL				500		/*!< Distance to the reference mark for the distance is calibration [mm]. */
 #define DA_AZIMUTH_CAL_RES			(DA_AZIMUTH_MAX + 2 * 18)	/*!< Azimuth at which the high speed clock is calibrated. */
 
-#define DA_DEF_SCANRATE				10		/*!< Default scan rate in scans per seconds. */
+#define DA_DEF_SCANRATE				2		/*!< Default scan rate in scans per seconds. */
 
 #define LED_MALFUNCTION				BSP_LED_RED		/*!< LED indicates a malfunction. */
 #define LED_LASER_OPERATION			BSP_LED_BLUE	/*!< LED indicates the laser is operating. */
@@ -99,6 +99,7 @@ typedef struct {
 
 		/* System component malfunctions */
 		Malf_EngineDriver,	/*!< Engine overcurrent or thermal shutdown. */
+		Malf_Engine,		/*!< Engine controller timeout. */
 		Malf_LaserDriver,	/*!< Laser overcurrent was detected. */
 		Malf_QuadEnc,		/*!< Quadrature encoder malfunction was detected. */
 		Malf_Tdc,			/*!< TDC stat register has an unexpected value. */
