@@ -34,7 +34,7 @@
  * ----------------------------------------------------------------------------
  */
 #define Q_RAWDATA_LENGTH			30			/*!< Memory pool and queue length of the raw data. */
-#define MAX_RAWDATA_LENGTH			25			/*!< Maximum measurement points each point of the room map. */
+#define MAX_RAWDATA_LENGTH			50			/*!< Maximum measurement points each point of the room map. */
 
 
 /*

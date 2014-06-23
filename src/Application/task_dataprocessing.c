@@ -132,9 +132,8 @@ void taskDataProcessing(void* pvParameters) {
 				for (i=0; i<raw_data->raw_ctr; i++) {
 					mean_value += raw_data->raw[i];
 				}
-				mean_value += (raw_data->expected_points - raw_data->raw_ctr) * maxValue(raw_data->raw, raw_data->raw_ctr);
+				mean_value += (raw_data->expected_points - raw_data->raw_ctr) * (1.5 * 39375);
 				mean_value = mean_value / raw_data->expected_points;
-//				mean_value = mean_value / raw_data->raw_ctr;
 			}
 			else {
 				/* Set the maximum value */
@@ -152,7 +151,7 @@ void taskDataProcessing(void* pvParameters) {
 			distance = VERILOG_OF_LIGHT / 2.0 * propagation_delay;
 
 			//DEMO
-			distance_mm_double = 100 * distance;
+			distance_mm_double = 181.9186 * distance;
 
 			/* Check a distance overflow */
 			if (distance_mm_double > (double) 0xFFF) {
@@ -177,23 +176,11 @@ void taskDataProcessing(void* pvParameters) {
 				/* Send the calculated result to the gatekeeper task */
 				xQueueSend(queueMessageData, room_map_point, portMAX_DELAY);
 			}
+
 		}
 	}
 
 	/* Never reach this point */
-}
-
-uint32_t maxValue(uint32_t *data, uint32_t length) {
-	uint32_t i;
-	uint32_t max_value = 0;
-
-	for (i=0; i<length; i++) {
-		if (max_value < data[i]) {
-			max_value = data[i];
-		}
-	}
-
-	return max_value;
 }
 
 
