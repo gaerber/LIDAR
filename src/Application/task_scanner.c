@@ -101,9 +101,6 @@ void taskScanner(void* pvParameters) {
 	// setpoint (sp) = Sollwert
 	// measured process variable (PV) = Istwert
 
-	/* Initialize the xLastWakeTime variable with the current time */
-	xLastWakeTime = xTaskGetTickCount();
-
 	/* Loop forever */
 	for (;;) {
 		/* Wait until the engine has to start */
@@ -115,6 +112,9 @@ void taskScanner(void* pvParameters) {
 
 		/* Set the tmeout */
 		timeout = 2 * ENGINE_SETTING_TIME;
+
+		/* Initialize the xLastWakeTime variable with the current time */
+		xLastWakeTime = xTaskGetTickCount();
 
 		/* Controller circuit of the engine */
 		while (set_point != 0) {
