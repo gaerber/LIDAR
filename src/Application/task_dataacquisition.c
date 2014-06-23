@@ -68,6 +68,9 @@ void azimuthMeasurementHandler(uint32_t azimuth);
 void tdcMeasurementHandler(void);
 void laserEndSequenceHandler(void);
 
+void engineStandByCallback(TimerHandle_t xTimer);
+void DataAcquisitionStartCallback(TimerHandle_t xTimer);
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -113,6 +116,11 @@ uint32_t g_rawCalibrationData;
  */
 TimerHandle_t timerEngineSleep;
 
+/**
+ * \brief	Software timer handler to start the data acquisition after reaching the engine speed.
+ */
+TimerHandle_t timerDataAcquisitionStart;
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -130,6 +138,22 @@ void engineStandByCallback(TimerHandle_t xTimer) {
 	/* Stop the engine */
 	speed_t engine_speed = 0;
 	xQueueSend(queueSpeed, &engine_speed, portMAX_DELAY);
+}
+
+/**
+ * \brief	Timer callback function to start the data acquisition after the setting
+ * 			time of the engine controller.
+ * \param[in]	xTimer The identifier that is assigned to the timer being called.
+ * 				Not used.
+ */
+void DataAcquisitionStartCallback(TimerHandle_t xTimer) {
+	/* Starts the data acquisition */
+	g_configs.enable = 1;
+
+	/* Starts the data acquisition with a calibration measurement of the
+	 * high speed clock from the TDC */
+	bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
+	bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 }
 
 
@@ -193,6 +217,10 @@ void taskDataAcquisitionInit(void) {
 	/* Generate the timer */
 	timerEngineSleep = xTimerCreate("Engine sleep", 3000/portTICK_PERIOD_MS,
 			pdFALSE, NULL, engineStandByCallback);
+
+	/* Generate the timer */
+	timerDataAcquisitionStart = xTimerCreate("Data Acquisition", (2*ENGINE_SETTING_TIME)/portTICK_PERIOD_MS,
+			pdFALSE, NULL, DataAcquisitionStartCallback);
 }
 
 
@@ -231,19 +259,11 @@ void taskDataAcquisition(void* pvParameters) {
 				g_configs.laser_pulses =  DA_LASERPULSE / settings.param.scan.rate;
 
 				/* Starts after a small time delay */
-				vTaskDelay(2 * ENGINE_SETTING_TIME);
-
-				/* Starts the data acquisition */
-				g_configs.enable = 1;
-
-				/* Starts the data acquisition with a calibration measurement of the
-				 * high speed clock from the TDC */
-				bsp_QuadencPosCallback(azimuthTDCCalibrationHandler);
-				bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
-
+				xTimerStart(timerDataAcquisitionStart, portMAX_DELAY);
 			}
 			else {
 				/* Stops the data acquisition */
+				xTimerStop(timerEngineSleep, portMAX_DELAY);
 				g_configs.enable = 0;
 
 				/* Stop the engine after a given time delay */
