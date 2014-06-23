@@ -22,6 +22,7 @@
 
 /* Application */
 #include "task_scanner.h"
+#include "task_controller.h"
 
 /* BSP */
 #include "bsp_engine.h"
@@ -94,6 +95,9 @@ void taskScanner(void* pvParameters) {
 	int32_t e_sum = 0;
 	int32_t controlling_element = 0;
 
+	int32_t timeout;
+	event_t event;
+
 	// setpoint (sp) = Sollwert
 	// measured process variable (PV) = Istwert
 
@@ -108,6 +112,9 @@ void taskScanner(void* pvParameters) {
 		/* Enable the engine */
 		bsp_EngineSpeed(0);
 		bsp_EngineEnalble();
+
+		/* Set the tmeout */
+		timeout = 2 * ENGINE_SETTING_TIME;
 
 		/* Controller circuit of the engine */
 		while (set_point != 0) {
@@ -136,21 +143,8 @@ void taskScanner(void* pvParameters) {
 			/* Calculate the difference */
 			e = set_point - process_variable;
 
-			/* Anti windup circuit */
-			if (controlling_element < ENGINE_MAX_POWER && controlling_element > -1 * ENGINE_MAX_POWER) {
-				e_sum = e_sum + e;
-
-				//////////////
-
-				if (e_sum > ENGINE_MAX_POWER / ENGINE_CONTROLER_KI) {
-					e_sum = ENGINE_MAX_POWER / ENGINE_CONTROLER_KI;
-				}
-				if (e_sum < (-1 * ENGINE_MAX_POWER / ENGINE_CONTROLER_KI)) {
-					e_sum = -1 * ENGINE_MAX_POWER / ENGINE_CONTROLER_KI;
-				}
-
-				///////////////
-			} /* In case of assessed controlling element -> integrator freeze */
+			/* Integrator */
+			e_sum = e_sum + e;
 
 			/* PI controller */
 			controlling_element  = ENGINE_CONTROLER_KP * e + ENGINE_CONTROLER_KI * ENGINE_CONTROLER_TA * e_sum;
@@ -158,9 +152,28 @@ void taskScanner(void* pvParameters) {
 			/* Limit the controlling element */
 			if (controlling_element > ENGINE_MAX_POWER) {
 				controlling_element = ENGINE_MAX_POWER;
+				/* Anti windup */
+				e_sum = e_sum - e;
+				/* Check blocking engine */
+				if (timeout-- == 0) {
+					/* Sends the failure to the controller */
+					event.event = Malf_Engine;
+					xQueueSend(queueEvent, &event, portMAX_DELAY);
+				}
 			}
-			if (controlling_element < (-1 * ENGINE_MAX_POWER)) {
+			else if (controlling_element < (-1 * ENGINE_MAX_POWER)) {
 				controlling_element = -1 * ENGINE_MAX_POWER;
+				/* Anti windup */
+				e_sum = e_sum - e;
+				/* Check blocking engine */
+				if (timeout-- == 0) {
+					/* Sends the failure to the controller */
+					event.event = Malf_Engine;
+					xQueueSend(queueEvent, &event, portMAX_DELAY);
+				}
+			}
+			else {
+				timeout = 2 * ENGINE_SETTING_TIME;
 			}
 
 			/* Sets the new controlling element */

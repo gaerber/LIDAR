@@ -44,7 +44,8 @@
 #define ENGINE_CONTROLER_KP			0.3		/*!< Proportional gain. */
 #define ENGINE_CONTROLER_KI			5		/*!< Integral gain. */
 #define ENGINE_CONTROLER_TA			1		/*!< Time interval. */
-#define ENGINE_MAX_POWER			4000	/*!< Maximum power. Must be smaller than BSP_ENGINE_PWM_PERIOD! */
+#define ENGINE_SETTING_TIME			3000		/*!< Controller setting time [ms] */
+#define ENGINE_MAX_POWER			4199	/*!< Maximum power. Must be smaller than BSP_ENGINE_PWM_PERIOD! */
 
 
 /*
