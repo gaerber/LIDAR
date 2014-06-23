@@ -231,7 +231,7 @@ void taskDataAcquisition(void* pvParameters) {
 				g_configs.laser_pulses =  DA_LASERPULSE / settings.param.scan.rate;
 
 				/* Starts after a small time delay */
-				vTaskDelay(20);
+				vTaskDelay(2 * ENGINE_SETTING_TIME);
 
 				/* Starts the data acquisition */
 				g_configs.enable = 1;

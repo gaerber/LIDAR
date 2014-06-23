@@ -43,7 +43,7 @@
  * Configurations
  * ----------------------------------------------------------------------------
  */
-#define DA_LASERPULSE		50		/*!< Number of laser pulse with 1 scan per second. */
+#define DA_LASERPULSE		30		/*!< Number of laser pulse with 1 scan per second. */
 
 
 /*
