@@ -41,10 +41,11 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define ENGINE_CONTROLER_KP			0.3		/*!< Proportional gain. */
-#define ENGINE_CONTROLER_KI			5		/*!< Integral gain. */
+#define ENGINE_CONTROLER_KP			180		/*!< Proportional gain. */
+#define ENGINE_CONTROLER_KI			55		/*!< Integral gain. */
 #define ENGINE_CONTROLER_TA			1		/*!< Time interval. */
-#define ENGINE_SETTING_TIME			3000		/*!< Controller setting time [ms] */
+#define ENGINE_SETTING_TIME			800		/*!< Engine speed controller setting time [ms] */
+#define ENGINE_RISE_TIME			180		/*!< Engine speed controller rise time [ms] */
 #define ENGINE_MAX_POWER			4199	/*!< Maximum power. Must be smaller than BSP_ENGINE_PWM_PERIOD! */
 
 

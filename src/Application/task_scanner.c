@@ -111,7 +111,7 @@ void taskScanner(void* pvParameters) {
 		bsp_EngineEnalble();
 
 		/* Set the tmeout */
-		timeout = 2 * ENGINE_SETTING_TIME;
+		timeout = ENGINE_RISE_TIME;
 
 		/* Initialize the xLastWakeTime variable with the current time */
 		xLastWakeTime = xTaskGetTickCount();
@@ -173,7 +173,7 @@ void taskScanner(void* pvParameters) {
 				}
 			}
 			else {
-				timeout = 2 * ENGINE_SETTING_TIME;
+				timeout = ENGINE_RISE_TIME;
 			}
 
 			/* Sets the new controlling element */
