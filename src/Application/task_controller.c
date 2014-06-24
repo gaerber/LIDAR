@@ -77,9 +77,6 @@ typedef struct {
  * ----------------------------------------------------------------------------
  */
 void MalfLedCallback(TimerHandle_t xTimer);
-void engineStandByCallback(TimerHandle_t xTimer);
-void systemCheckCallback(TimerHandle_t xTimer);
-
 void taskController(void* pvParameters);
 void sendMessage(char msg_typw, const char* msg);
 void triggerMalfunctionLed(void);

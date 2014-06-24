@@ -150,8 +150,8 @@ void taskDataProcessing(void* pvParameters) {
 			propagation_delay = (mean_value / (double) 0xFFFF) * cal_resonator_factor * (1.0 / BSP_GP22_HS_CRYSTAL);
 			distance = VERILOG_OF_LIGHT / 2.0 * propagation_delay;
 
-			//DEMO
-			distance_mm_double = 211.7335 * distance;
+			/* Unit conversion */
+			distance_mm_double = UINT_FACTOR * distance;
 
 			/* Check a distance overflow */
 			if (distance_mm_double > (double) 0xFFF) {
@@ -159,13 +159,16 @@ void taskDataProcessing(void* pvParameters) {
 				distance_mm_double = (double) 0xFFF;
 			}
 
+			/* Change the distance in a 16 bit integer */
 			distance_mm = distance_mm_double;
 
+			/* Check if it is a offset correction measurement or a data point of the room map */
 			if (azimuth == DA_AZIMUTH_CAL_DIST) {
 				/* Set the new calibration offset */
 				distance_offset_mm = distance_mm - DA_DISTANCE_CAL;
 			}
 			else {
+				/* Offset correction only by a true distance value */
 				if (distance_mm != 0xFFF) {
 					distance_mm = distance_mm - distance_offset_mm;
 				}

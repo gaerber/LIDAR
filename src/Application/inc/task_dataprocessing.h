@@ -42,7 +42,8 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define VERILOG_OF_LIGHT			299792458	/*!< Verilog of the light [m/s]. Source: Wikipedia */
+#define VERILOG_OF_LIGHT			299792458	/*!< Verilog of the light [m/s]. Source: Wikipedia. */
+#define UINT_FACTOR					211.7335	/*!< Calculated factor to the unit conversion. */
 
 
 /*

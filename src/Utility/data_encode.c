@@ -46,8 +46,14 @@ inline void dataEncode(int16_t azimuth, int16_t distance, char *base64) {
 	base64[3] = look_up_table[(distance) & 0x3F];
 }
 
-inline void dataEncodeDEMO(int16_t azimuth, int16_t distance, char *base64) {
-	sprintf(base64, "%d", distance);
+/**
+ * \brief	Demonstration Encoder of the data  (only the distance).
+ * \param[in]	azimuth is the signed 12 bit azimuth value in tenth degree.
+ * \param[in]	distance is the 12 bit unsigned distance value in millimeters.
+ * \param[out]	str is a storage address of 4 bytes for the encoded data. MSB first.
+ */
+inline void dataEncodeDEMO(int16_t azimuth, int16_t distance, char *str) {
+	sprintf(str, "%d", distance);
 }
 
 /**
