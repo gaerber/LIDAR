@@ -496,32 +496,32 @@ void taskController(void* pvParameters) {
 
 			/* Engine overcurrent or thermal shutdown */
 			case Malf_EngineDriver:
-				/* Stop the data acquisition */
-				stopDataAcquisition();
-
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "engine driver malfunction");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 			break;
 
 			/* Engine controller timeout */
 			case Malf_Engine:
-				/* Stop the data acquisition */
-				stopDataAcquisition();
-
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "eingine is blocked");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 				break;
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
-				/* Stop the data acquisition */
-				stopDataAcquisition();
-
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "laser driver malfunction");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 				break;
 
 			/* Quadrature encoder malfunction was detected */
@@ -595,28 +595,28 @@ void taskController(void* pvParameters) {
 
 			/* No space available in memory pool */
 			case Fault_MemoryPool:
-				/* Stop the data acquisition */
-				stopDataAcquisition();
-
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "no space available in memory pool");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 				break;
 
 			/* Not allowed pointer to raw data memory */
 			case Fault_MemoryPoolPtr:
-				/* Stop the data acquisition */
-				stopDataAcquisition();
-
 				/* Trigger the error LED */
 				triggerMalfunctionLed();
 				sendMessage(MSG_TYPE_STATE, "internal timing malfunction");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
 				break;
 
 			/* Command error */
 			default:
 				triggerMalfunctionLed();
-				sendMessage(MSG_TYPE_STATE, "unknown controller command");
+				sendMessage(MSG_TYPE_STATE, "unknown controller event");
 				break;
 			}
 		}
@@ -667,12 +667,13 @@ void triggerMalfunctionLed(void) {
 void stopDataAcquisition(void) {
 	dataacquisition_t data_acquisition_config;
 
-	if (g_systemState.state == MODE_DATA) {
-		/* Stop the data acquisition */
-		data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
-		data_acquisition_config.param.engine_sleep = g_systemState.engine_sleep;
-		xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
+	/* Stop the data acquisition as soon as possible */
+	data_acquisition_config.state = DATA_ACQUISITION_DISABLE;
+	/* After a malfunction, stop the engine without a delay */
+	data_acquisition_config.param.engine_sleep = 0;
+	xQueueSend(queueDataAcquisition, &data_acquisition_config, portMAX_DELAY);
 
+	if (g_systemState.state == MODE_DATA) {
 		/* Change the state */
 		g_systemState.state = MODE_CMD;
 

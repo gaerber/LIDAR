@@ -219,7 +219,7 @@ void taskDataAcquisitionInit(void) {
 			pdFALSE, NULL, engineStandByCallback);
 
 	/* Generate the timer */
-	timerDataAcquisitionStart = xTimerCreate("Data Acquisition", (2*ENGINE_SETTING_TIME)/portTICK_PERIOD_MS,
+	timerDataAcquisitionStart = xTimerCreate("Data Acquisition", ENGINE_SETTING_TIME/portTICK_PERIOD_MS,
 			pdFALSE, NULL, DataAcquisitionStartCallback);
 }
 
@@ -258,12 +258,21 @@ void taskDataAcquisition(void* pvParameters) {
 				g_configs.azimuth_res = tenthdegree2increments_Relative(settings.param.scan.step);
 				g_configs.laser_pulses =  DA_LASERPULSE / settings.param.scan.rate;
 
-				/* Starts after a small time delay */
-				xTimerStart(timerDataAcquisitionStart, portMAX_DELAY);
+				/* Check if the engine is running */
+				if (xTimerIsTimerActive(timerEngineSleep) != pdFALSE) {
+					/* Stops the engine delay sleep timer */
+					xTimerStop(timerEngineSleep, portMAX_DELAY);
+					/* Starts the data acquisition direct */
+					DataAcquisitionStartCallback(NULL);
+				}
+				else {
+					/* Starts after a small time delay */
+					xTimerStart(timerDataAcquisitionStart, portMAX_DELAY);
+				}
 			}
 			else {
 				/* Stops the data acquisition */
-				xTimerStop(timerEngineSleep, portMAX_DELAY);
+				xTimerStop(timerDataAcquisitionStart, portMAX_DELAY);
 				g_configs.enable = 0;
 
 				/* Stop the engine after a given time delay */
