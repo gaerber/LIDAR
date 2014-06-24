@@ -151,7 +151,7 @@ void taskDataProcessing(void* pvParameters) {
 			distance = VERILOG_OF_LIGHT / 2.0 * propagation_delay;
 
 			//DEMO
-			distance_mm_double = 181.9186 * distance;
+			distance_mm_double = 211.7335 * distance;
 
 			/* Check a distance overflow */
 			if (distance_mm_double > (double) 0xFFF) {
