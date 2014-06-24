@@ -433,24 +433,30 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 			bsp_QuadencSetCapture(tenthdegree2increments(DA_AZIMUTH_CAL_RES));
 		}
 
-		/* Get a memory block for the raw data */
-		if (eMemTakeBlockFromISR(&memRawData, (void**)&g_rawDataPtr, &xTaskWoken) == MEM_NO_ERROR) {
-			/* Set the default values */
-			g_rawDataPtr->cal_resonator = g_rawCalibrationData;
-			g_rawDataPtr->increments = azimuth;
-			g_rawDataPtr->expected_points = g_configs.laser_pulses;
-			g_rawDataPtr->raw_ctr = 0;
+		/* The last sequence must be done */
+		if (g_rawDataPtr == NULL) {
+			/* Get a memory block for the raw data */
+			if (eMemTakeBlockFromISR(&memRawData, (void**)&g_rawDataPtr, &xTaskWoken) == MEM_NO_ERROR) {
+				/* Set the default values */
+				g_rawDataPtr->cal_resonator = g_rawCalibrationData;
+				g_rawDataPtr->increments = azimuth;
+				g_rawDataPtr->expected_points = g_configs.laser_pulses;
+				g_rawDataPtr->raw_ctr = 0;
 
-			/* Set the TDC callback function */
-			bsp_GP22IntCallback(tdcMeasurementHandler);
+				/* Set the TDC callback function */
+				bsp_GP22IntCallback(tdcMeasurementHandler);
 
-			/* Starts a measurement sequence */
-			bsp_LaserPulse(g_configs.laser_pulses);
+				/* Starts a measurement sequence */
+				bsp_LaserPulse(g_configs.laser_pulses);
+			}
+			else {
+				/* Send an error message to the controller */
+				error_event.event = Fault_MemoryPool;
+				xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
+			}
 		}
 		else {
-			/* Send an error message to the controller */
-			error_event.event = Fault_MemoryPool;
-			xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
+
 		}
 	}
 	else {

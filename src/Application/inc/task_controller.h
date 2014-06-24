@@ -108,6 +108,7 @@ typedef struct {
 		/* System fault */
 		Fault_MemoryPool,	/*!< No space available in memory pool. */
 		Fault_MemoryPoolPtr,/*!< Not allowed pointer to raw data memory. */
+		Fault_Timing		/*!< Not ready for the next data point. */
 
 	} event;
 

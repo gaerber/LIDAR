@@ -613,6 +613,16 @@ void taskController(void* pvParameters) {
 				stopDataAcquisition();
 				break;
 
+			/* Not ready for the next data point */
+			case Fault_Timing:
+				/* Trigger the error LED */
+				triggerMalfunctionLed();
+				sendMessage(MSG_TYPE_STATE, "scanner overspeed");
+
+				/* Stop the data acquisition */
+				stopDataAcquisition();
+				break;
+
 			/* Command error */
 			default:
 				triggerMalfunctionLed();
