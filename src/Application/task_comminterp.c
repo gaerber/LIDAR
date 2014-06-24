@@ -447,7 +447,7 @@ void* parseCommandSetScan(char **msg) {
 				*msg += 6;
 				if (parseParamNumber(msg, 0, &number1) && parseParamNumber(msg, 1, &number2)) {
 					/* Check if the value were in bound */
-					if (number1 >= DA_AZIMUTH_MIN && number1 < number2 && number2 <= DA_AZIMUTH_MAX) {
+					if (number1 >= DA_AZIMUTH_MIN && number1 <= number2 && number2 <= DA_AZIMUTH_MAX) {
 						resolved_command.event = UC_SetScanBndry;
 						resolved_command.param.azimuth_bndry.left = (int16_t) number1;
 						resolved_command.param.azimuth_bndry.right = (int16_t) number2;
@@ -539,7 +539,7 @@ void* parseCommandSetEngine(char **msg) {
 				*msg += 6;
 				if (parseParamNumber(msg, 1, &number)) {
 					/* Check if the value were in bound */
-					if (number > 0 && number <= 5000) {
+					if (number >= 0 && number <= 5000) {
 					resolved_command.event = UC_SetEngineSleep;
 					resolved_command.param.engine_sleep = number;
 					xQueueSend(queueEvent, &resolved_command, portMAX_DELAY);
