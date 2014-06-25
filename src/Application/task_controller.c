@@ -440,14 +440,11 @@ void taskController(void* pvParameters) {
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
 				break;
 
-			/* todo last: Some magic feature */
+			/* Some magic feature */
 			case UC_EE:
 				triggerMalfunctionLed();
 				stopDataAcquisition();
-//				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
-//				bsp_LaserPulse(7);
-
-//				taskEEInit();
+				taskEEInit();
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
@@ -493,8 +490,8 @@ void taskController(void* pvParameters) {
 
 			/* Engine overcurrent or thermal shutdown */
 			case Malf_EngineDriver:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "engine driver malfunction");
 
 				/* Stop the data acquisition */
@@ -503,8 +500,8 @@ void taskController(void* pvParameters) {
 
 			/* Engine controller timeout */
 			case Malf_Engine:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "eingine is blocked");
 
 				/* Stop the data acquisition */
@@ -513,8 +510,8 @@ void taskController(void* pvParameters) {
 
 			/* Laser overcurrent was detected */
 			case Malf_LaserDriver:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "laser driver malfunction");
 
 				/* Stop the data acquisition */
@@ -592,8 +589,8 @@ void taskController(void* pvParameters) {
 
 			/* No space available in memory pool */
 			case Fault_MemoryPool:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "no space available in memory pool");
 
 				/* Stop the data acquisition */
@@ -602,8 +599,8 @@ void taskController(void* pvParameters) {
 
 			/* Not allowed pointer to raw data memory */
 			case Fault_MemoryPoolPtr:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "internal timing malfunction");
 
 				/* Stop the data acquisition */
@@ -612,8 +609,8 @@ void taskController(void* pvParameters) {
 
 			/* Not ready for the next data point */
 			case Fault_Timing:
-				/* Trigger the error LED */
-				triggerMalfunctionLed();
+				/* Set the error LED */
+				bsp_LedSetOn(LED_MALFUNCTION);
 				sendMessage(MSG_TYPE_STATE, "scanner overspeed");
 
 				/* Stop the data acquisition */
@@ -650,6 +647,7 @@ void sendMessage(char msg_type, const char* msg) {
 		/* Only the error number */
 		message.msg[0] = msg[0];
 		message.msg[1] = msg[1];
+		message.msg[2] = '\0';
 	}
 
 	/* Send the message to the gatekeeper */
@@ -683,6 +681,7 @@ void stopDataAcquisition(void) {
 	if (g_systemState.state == MODE_DATA) {
 		/* Change the state */
 		g_systemState.state = MODE_CMD;
+		g_systemState.readcommand = g_systemState.comm_echo;
 
 		/* Reset the LED */
 		bsp_LedSetOff(LED_LASER_OPERATION);
