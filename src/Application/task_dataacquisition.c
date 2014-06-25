@@ -53,7 +53,7 @@ typedef struct {
 	uint32_t azimuth_res;		/*!< Resolution between two measurement points. */
 	uint32_t laser_pulses;		/*!< Number of laser pulses each measurement point. */
 	uint8_t enable;				/*!< State of the data acquisition. TRUE if enabled. */
-} dataaquisition_t;
+} acquisitionconfigs_t;
 
 
 /*
@@ -98,7 +98,7 @@ QueueHandle_t queueDataAcquisition;
 /**
  * \brief	All configuration of the data acquisition.
  */
-static dataaquisition_t g_configs;
+static acquisitionconfigs_t g_configs;
 
 /**
  * \brief	Pointer to the storage of the raw data. Get the space form a
@@ -456,7 +456,9 @@ void azimuthMeasurementHandler(uint32_t azimuth) {
 			}
 		}
 		else {
-
+			/* Send an error message to the controller */
+			error_event.event = Fault_Timing;
+			xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 		}
 	}
 	else {

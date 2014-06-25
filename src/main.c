@@ -3,19 +3,6 @@
  * \brief		Includes the main function, which will be called after the start
  * 				up sequence.
  *
- * \mainpage	LIDAR
- * \author		Kevin Gerber
- * \date		2014-05-23
- * \version		0.1
- *
- * \note		This is a developer preview.
- * \warning		Application template.
- *
- * \section Introduction
- * \section Architecture
- * \image html architecture.png
- * \section Hardware
- *
  * \addtogroup	app
  * \brief		This is the main module of the application. It contains the main
  * 				function, which is called after the start up sequence and the

@@ -1,0 +1,22 @@
+/**
+ * \mainpage	LIDAR
+ * \author		Kevin Gerber
+ * \date		2014-06-25
+ * \version		1.0
+ *
+ * \note		This document describes the sourcecode of the LIDAR firmware. This sourcecode was released at the end of the thesis.
+ *
+ * \section Introduction
+ * 
+ * 
+ * \section Architecture
+ * \image html architecture.png
+ *
+ * \section Software Design
+ * The software is developed on an ARM Cortex M4 microcontroller. The following picture shows the context.
+ * \image html context.png
+ * The next picture is shown all tasks and theiy synchronization.
+ * \image html tasks.png
+ * 
+ * \section Hardware
+ */

@@ -41,7 +41,7 @@
  * Application settings
  * ----------------------------------------------------------------------------
  */
-#define LIDAR_VERSION				"0.2B"	/*!< LIDAR versions number [string] */
+#define LIDAR_VERSION				"1.0"	/*!< LIDAR versions number [string] */
 #define DA_AZIMUTH_MIN				-1188	/*!< Minimum azimuth [tenth degree]. */
 #define DA_AZIMUTH_MAX				1188	/*!< Maximum azimuth [tenth degree]. */
 #define DA_AZIMUTH_RES				18		/*!< Default azimuth steps [tenth degree]. */
@@ -92,7 +92,7 @@ typedef struct {
 
 		/* User Command Error */
 		ErrUC_UnknownCommand,	/*!< A unknown command is received. */
-		ErrUC_TooFewArgs,	/*!< To few arguments in the command. */
+		ErrUC_TooFewArgs,	/*!< Too few arguments in the command. */
 		ErrUC_FaultArgType,	/*!< One or more arguments were in the fault data type. */
 		ErrUC_ArgOutOfBounds,	/*!< One or more arguments were out of the allowed bounds. */
 		ErrUC_LineOverflow,	/*!< Command line overflow detected. */

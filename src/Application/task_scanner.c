@@ -98,9 +98,6 @@ void taskScanner(void* pvParameters) {
 	int32_t timeout;
 	event_t event;
 
-	// setpoint (sp) = Sollwert
-	// measured process variable (PV) = Istwert
-
 	/* Loop forever */
 	for (;;) {
 		/* Wait until the engine has to start */
