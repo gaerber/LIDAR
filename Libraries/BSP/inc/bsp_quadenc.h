@@ -70,7 +70,7 @@ static const bsp_gpioconf_t BSP_QUADENC_INCB = {
  * \brief	Quadrature input channel I (index).
  */
 static const bsp_gpioconf_t BSP_QUADENC_INCI = {
-		RCC_AHB1Periph_GPIOE, GPIOE, GPIO_Pin_13, GPIO_Mode_IN, GPIO_PuPd_NOPULL
+		RCC_AHB1Periph_GPIOE, GPIOE, GPIO_Pin_13, GPIO_Mode_IN, GPIO_PuPd_UP
 };
 
 #define BSP_QUADENC_TIMER			TIM1					/*!< Port base address of the timer port */
