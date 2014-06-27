@@ -31,23 +31,6 @@
 #include "task_dataprocessing.h"
 #include "task_dataacquisition.h"
 
-/**
- * \brief	A blocked time delay.
- */
-void delay(void) {
-	volatile uint32_t ctr;
-
-	for (ctr=0; ctr<0x3FFFF; ctr++) {
-
-	}
-}
-
-
-/** Button T0 */
-//static const bsp_gpioconf_t BSP_BUTTON_USER = {
-//		RCC_AHB1Periph_GPIOA, GPIOA, GPIO_Pin_0, GPIO_Mode_IN, GPIO_PuPd_NOPULL
-//};
-
 
 /**
  * \brief	Main function. Will be called after the startup sequence.
