@@ -61,9 +61,8 @@ typedef enum {
 /**
  * \brief	Assert macro.
  * \param	cond	Conditions, which must be true.
- * \todo	Define an assert function.
  */
-#define assert(cond) //((cond)?(0): (fprintf (stderr, "assertion failed: \ %s, file %s, line %d \n",#cond,__FILE__,__LINE__), abort()))
+#define assert(cond)
 
 
 /**

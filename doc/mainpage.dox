@@ -1,0 +1,26 @@
+/**
+ * \mainpage	LIDAR
+ * \author		Kevin Gerber
+ * \date		2014-06-25
+ * \version		1.0
+ *
+ * \note		This document describes the sourcecode of the LIDAR firmware. This sourcecode was released at the end of the thesis.
+ *
+ * \section Introduction
+ * Mobile Roboter benötigen zur autonomen Navigation Informationen über ihr Umfeld. Diese Informationen können zur Bestimmung der eigenen Position oder zur optimalen Planung von Routen verwendet werden. In den meisten Fällen wird für die Datenerfassung ein LIDAR eingesetzt. LIDAR (Abk. Light Detection and Ranging) beschreibt grundsätzlich ein Prinzip zur optischen Abstands und Geschwindigkeitsmessung. Dabei werden elektromagnetische Strahlungen im Sichtbaren oder Infrarotbereich ausgesendet und das von einem Objekt reflektierte Licht wird detektiert. Aus der Laufzeit und der Ausbreitungsgeschwindigkeit des Lichtes kann der Abstand berechnet werden.
+ * Dieses Projekt befasst sich mit der Entwicklung eines LIDARs, welches zum Erfassen von zweidimensionalen Umgebungskarten eingesetzt werden kann. Im Rahmen der Projektstudie und der Bachelor Thesis arbeiten Kevin Gerber und Marcel Bärtschi unter der Betreuung von Martin Kucera. Das Ziel der Arbeit ist ein kostengünstiges und funktionsfähiges System zu entwickeln, welches den definierten Anforderungen entspricht.
+ * Während der Projektstudie wurde ein Konzept entwickelt, welches die vier Teilsysteme Kontroller, Kommunikation, Scanvorrichtung und Datenerfassung umfasst. Zur Erfassung einer Karte werden Azimut und Abstand benötigt. Die Anstandsmessung wurde nach dem Prinzip von Time of Flight (TOF) aufgebaut. Dabei wird direkt die Zeitverzögerung, die das ausgesendete Signal benötigt um zum Messgerät zurückzukehren, gemessen. Um die sehr kurzen Laufzeiten mit einer genügend grossen Auslösung zu messen, wurde ein Time to Digital Converter (TDC) von ACAM eingesetzt.
+ * In der Thesis wurde das erarbeitete Konzept umgesetzt. Während den acht Wochen, die zur Verfügung standen, wurde unter anderem eine Hardware entwickelt, die Mechanik konstruiert und die Software zur Steuerung des kompletten Ablaufes erstellt.
+ * Das Endprodukt präsentiert sich als stabil laufendes LIDAR, welches die Anforderungen aus dem Pflichtenheft erfüllt. Hindernisse werden in einem Bereich zwischen 20cm und 3m erkennt. Die Genauigkeit des Abstandes übertrifft die Anforderungen aus dem Pflichtenheft deutlich.
+ * 
+ * \section Architecture
+ * \image html architecture.png
+ *
+ * \section Software Design
+ * Als Kontroller wurde ein ARM Cortex M4 von ST gewählt. Die Bezeichnung lautet STM32F4. Die nachstehende Abbildung zeigt das Kontextdiagramm mit allen Datenquellen und –senken (Terminatoren) aller definierten Teilsysteme.
+ * \image html context.png
+ * Die Teilsysteme weisen nur geringe Abhängigkeiten zueinander auf und können somit auch in der Software einzeln betrachtet werden. Allerdings müssen diese Teilsysteme parallel zu einander funktionieren. Dazu eignet sich besonders der Einsatz eines Echtzeitbetriebssystems. Aufgrund der gesammelten Erfahrung wurde entschieden das freeRTOS V8.0.0  einzusetzen.
+ * \subsection Tasks
+ * Die Aufgaben des Kontrollers wurden in sechs Tasks unterteilt. Die nachfolgende Abbildung zeigt diese sechs Tasks mit deren Kommunikation und Synchronisation untereinander.
+ * \image html tasks.png
+ */

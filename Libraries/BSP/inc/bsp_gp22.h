@@ -38,14 +38,17 @@ typedef void (*bsp_gp22callback_t)(void);
  * TDC configurations
  * ----------------------------------------------------------------------------
  */
-#define BSP_GP22_REG0		0x00042055		/*!< TDC-GP22 register 0 configuration */
-#define BSP_GP22_REG1		0x194900AA		/*!< TDC-GP22 register 1 configuration */
-#define BSP_GP22_REG2		0xA0000000		/*!< TDC-GP22 register 2 configuration */
+#define BSP_GP22_REG0		0x00042655		/*!< TDC-GP22 register 0 configuration */
+#define BSP_GP22_REG1		0x19C900AA		/*!< TDC-GP22 register 1 configuration */
+#define BSP_GP22_REG2		0x20000000		/*!< TDC-GP22 register 2 configuration */
 #define BSP_GP22_REG3		0x000000FF		/*!< TDC-GP22 register 3 configuration */
 #define BSP_GP22_REG4		0x20000000		/*!< TDC-GP22 register 4 configuration */
-#define BSP_GP22_REG5		0x50000000		/*!< TDC-GP22 register 5 configuration */
+#define BSP_GP22_REG5		0x10000000		/*!< TDC-GP22 register 5 configuration */
 #define BSP_GP22_REG6		0x00000000		/*!< TDC-GP22 register 6 configuration */
 
+#define BSP_GP22_RESONATOR	32768.0			/*!< Frequency of the calibration resonator [Hz]. */
+#define BSP_GP22_RESONATOR_CYCLE	2.0		/*!< Number of cycles while resonator calibration. */
+#define BSP_GP22_HS_CRYSTAL	4000000.0		/*!< Frequency of the high speed crystal [Hz]. */
 
 /*
  * ----------------------------------------------------------------------------
@@ -57,13 +60,13 @@ typedef void (*bsp_gp22callback_t)(void);
  * Interrupt pin from the GP22. Signals when measurement is finished.
  */
 static const bsp_gpioconf_t BSP_GP22_INT = {
-		RCC_AHB1Periph_GPIOG, GPIOG, GPIO_Pin_8, GPIO_Mode_IN, GPIO_PuPd_UP
+		RCC_AHB1Periph_GPIOB, GPIOB, GPIO_Pin_1, GPIO_Mode_IN, GPIO_PuPd_UP
 };
 
 /* Interrupt settings */
-#define BSP_GP22_IRQ_CHANEL		EXTI9_5_IRQn		/*!< NVIC GPIO interrupt */
+#define BSP_GP22_IRQ_CHANEL		EXTI1_IRQn			/*!< NVIC GPIO interrupt */
 #define BSP_GP22_IRQ_PRIORITY	8					/*!< NVIC GPIO interrupt priority */
-#define BSP_GP22_IRQ_Handler	EXTI9_5_IRQHandler	/*!< NVIC GPIO handler */
+#define BSP_GP22_IRQ_Handler	EXTI1_IRQHandler	/*!< NVIC GPIO handler */
 
 
 /*

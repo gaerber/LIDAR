@@ -71,15 +71,6 @@ void bsp_LedSetToggle(bsp_led_t led) {
 	GPIO_ToggleBits(BSP_LED_PORTS[led].base, BSP_LED_PORTS[led].pin);
 }
 
-/**
- * \brief	Reads the state of a LED.
- * \param[in]	led The identification number of the LED, which toggle.
- * \return	State of the LED.
- * \todo	Not tested!
- */
-uint8_t bsp_LedRead(bsp_led_t led) {
-	return GPIO_ReadOutputDataBit(BSP_LED_PORTS[led].base, BSP_LED_PORTS[led].pin);
-}
 
 /**
  * @}

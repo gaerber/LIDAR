@@ -67,14 +67,14 @@ void BSP_QUADENC_POS_IRQ_Handler(void) {
  * \brief	Index interrupt handler. The position must be set back to zero.
  */
 void BSP_QUADENC_I_IRQ_Handler(void) {
-	uint32_t incs;
-
 	/* Rising edge interrupt of the index */
 	if(EXTI_GetITStatus(BSP_QUADENC_INCI.pin) != RESET) {
 		/* Clear the interrupt flag */
 		EXTI_ClearITPendingBit(BSP_QUADENC_INCI.pin);
 
 #if BSP_QUADENC_ROTERROR_HOOK
+		uint32_t incs;
+
 		/* Check rotation increments */
 		if (bsp_QuadencGet(&incs) && incs != 0) {
 			/* Rotation error detected */
@@ -103,6 +103,8 @@ void bsp_QuadencInit(void) {
 	TIM_OCInitTypeDef TIM_OCInitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
+
+	TIM_DeInit(BSP_QUADENC_TIMER);
 
 	/* Initialize all GPIOs in their function */
 	bsp_GpioInit(&BSP_QUADENC_INCA);
@@ -136,7 +138,7 @@ void bsp_QuadencInit(void) {
 	TIM_OCInitStructure.TIM_Pulse = 0xFFFF;
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	/* Check the caption compare channel */
-	switch (BSP_QUADENC_POS_CHANEL) {
+	switch (BSP_QUADENC_POS_CHANNEL) {
 	case CHANNEL1:
 		/* PWM Mode configuration: Channel1 */
 		TIM_OC1Init(BSP_QUADENC_TIMER, &TIM_OCInitStructure);
@@ -200,6 +202,9 @@ void bsp_QuadencInit(void) {
 
 	/* Enable timer */
 	TIM_Cmd(BSP_QUADENC_TIMER, ENABLE);
+
+	//DEMO
+	g_calibration = 1;
 }
 
 /**
@@ -210,8 +215,10 @@ void bsp_QuadencInit(void) {
  * 			value is probably incorrect.
  */
 uint8_t bsp_QuadencGet(uint32_t *azimuth) {
-	/* Gets the counter value */
-	*azimuth = TIM_GetCounter(BSP_QUADENC_TIMER);
+	if (g_calibration) {
+		/* Gets the counter value */
+		*azimuth = TIM_GetCounter(BSP_QUADENC_TIMER);
+	}
 
 	return g_calibration;
 }
@@ -222,7 +229,7 @@ uint8_t bsp_QuadencGet(uint32_t *azimuth) {
  */
 void bsp_QuadencSetCapture(uint32_t azimuth) {
 	/* Check the caption compare channel */
-	switch (BSP_QUADENC_POS_CHANEL) {
+	switch (BSP_QUADENC_POS_CHANNEL) {
 	case CHANNEL1:
 		/* Set caption compare register: Channel 1 */
 		TIM_SetCompare1(BSP_QUADENC_TIMER, azimuth);
