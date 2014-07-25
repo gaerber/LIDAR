@@ -2,7 +2,7 @@
  * \file		task_gatekeeper.c
  * \brief		Sends all messages over the serial interface to the user.
  * \date		2014-05-29
- * \version		0.1
+ * \version		0.1.1
  * \author		Kevin Gerber
  *
  * \addtogroup	app
@@ -159,11 +159,13 @@ void taskGatekeeper(void* pvParameters) {
 
 			/* Send the string to the TX output buffer */
 			while (*ptr != '\0' && timeout > 0) {
-				while (!bsp_SerialCharPut(*ptr++)) {
+				while (!bsp_SerialCharPut(*ptr) && timeout > 0) {
 					/* No space available in the circular buffer */
 					vTaskDelay(10/portTICK_PERIOD_MS);
 					timeout--;
 				}
+				/* Next character */
+				ptr++;
 			}
 
 			/* Send the end of the message frame */
