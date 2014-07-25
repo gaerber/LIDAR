@@ -28,7 +28,7 @@
 #include "task_gatekeeper.h"
 #include "task_comminterp.h"
 #include "task_scanner.h"
-#include "task_ee.h"
+//#include "task_ee.h"
 
 /* BSP */
 #include "bsp_led.h"
@@ -444,7 +444,9 @@ void taskController(void* pvParameters) {
 			case UC_EE:
 				triggerMalfunctionLed();
 				stopDataAcquisition();
+				#ifdef TASK_EE_H_
 				taskEEInit();
+				#endif
 
 				/* Read the next user command */
 				xQueueSend(queueReadCommand, &g_systemState.readcommand, portMAX_DELAY);
