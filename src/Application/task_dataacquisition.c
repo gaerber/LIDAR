@@ -513,7 +513,7 @@ void laserEndSequenceHandler(void) {
 			/* Stat is 0x0000 if the last sample was successful,
 			 * Stat is 0x0208 if a timeout occurs due to missing reflection */
 			if (!(stat == 0x0000 || (stat&0xFFF8) == 0x0208)) {
-				/* Error occurs */
+				/* Send an error event with the value of the state register */
 				error_event.event = Malf_Tdc;
 				error_event.param.gp22_stat = stat;
 				xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
@@ -527,10 +527,14 @@ void laserEndSequenceHandler(void) {
 		}
 		else {
 			/* Send an error event with the value of the state register */
-			error_event.event = Malf_Tdc;
-			error_event.param.gp22_stat = stat;
+			error_event.event = Fault_MemoryPool;
 			xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 		}
+	}
+	else {
+		/* Send error event */
+		error_event.event = Fault_MemoryPoolPtr;
+		xQueueSendFromISR(queueEvent, &error_event, &xTaskWoken);
 	}
 
 	/* Check if a higher prior task is woken up */
