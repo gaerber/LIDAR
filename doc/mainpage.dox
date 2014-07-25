@@ -1,26 +1,45 @@
 /**
- * \mainpage	LIDAR
+ * \mainpage	LIDAR - Entwicklung eines Sensors zur autonomen Roboternavigation
  * \author		Kevin Gerber
  * \date		2014-06-25
  * \version		1.0
  *
  * \note		This document describes the sourcecode of the LIDAR firmware. This sourcecode was released at the end of the thesis.
  *
- * \section Introduction
- * Mobile Roboter benötigen zur autonomen Navigation Informationen über ihr Umfeld. Diese Informationen können zur Bestimmung der eigenen Position oder zur optimalen Planung von Routen verwendet werden. In den meisten Fällen wird für die Datenerfassung ein LIDAR eingesetzt. LIDAR (Abk. Light Detection and Ranging) beschreibt grundsätzlich ein Prinzip zur optischen Abstands und Geschwindigkeitsmessung. Dabei werden elektromagnetische Strahlungen im Sichtbaren oder Infrarotbereich ausgesendet und das von einem Objekt reflektierte Licht wird detektiert. Aus der Laufzeit und der Ausbreitungsgeschwindigkeit des Lichtes kann der Abstand berechnet werden.
- * Dieses Projekt befasst sich mit der Entwicklung eines LIDARs, welches zum Erfassen von zweidimensionalen Umgebungskarten eingesetzt werden kann. Im Rahmen der Projektstudie und der Bachelor Thesis arbeiten Kevin Gerber und Marcel Bärtschi unter der Betreuung von Martin Kucera. Das Ziel der Arbeit ist ein kostengünstiges und funktionsfähiges System zu entwickeln, welches den definierten Anforderungen entspricht.
- * Während der Projektstudie wurde ein Konzept entwickelt, welches die vier Teilsysteme Kontroller, Kommunikation, Scanvorrichtung und Datenerfassung umfasst. Zur Erfassung einer Karte werden Azimut und Abstand benötigt. Die Anstandsmessung wurde nach dem Prinzip von Time of Flight (TOF) aufgebaut. Dabei wird direkt die Zeitverzögerung, die das ausgesendete Signal benötigt um zum Messgerät zurückzukehren, gemessen. Um die sehr kurzen Laufzeiten mit einer genügend grossen Auslösung zu messen, wurde ein Time to Digital Converter (TDC) von ACAM eingesetzt.
- * In der Thesis wurde das erarbeitete Konzept umgesetzt. Während den acht Wochen, die zur Verfügung standen, wurde unter anderem eine Hardware entwickelt, die Mechanik konstruiert und die Software zur Steuerung des kompletten Ablaufes erstellt.
- * Das Endprodukt präsentiert sich als stabil laufendes LIDAR, welches die Anforderungen aus dem Pflichtenheft erfüllt. Hindernisse werden in einem Bereich zwischen 20cm und 3m erkennt. Die Genauigkeit des Abstandes übertrifft die Anforderungen aus dem Pflichtenheft deutlich.
- * 
- * \section Architecture
- * \image html architecture.png
  *
- * \section Software Design
- * Als Kontroller wurde ein ARM Cortex M4 von ST gewählt. Die Bezeichnung lautet STM32F4. Die nachstehende Abbildung zeigt das Kontextdiagramm mit allen Datenquellen und –senken (Terminatoren) aller definierten Teilsysteme.
- * \image html context.png
- * Die Teilsysteme weisen nur geringe Abhängigkeiten zueinander auf und können somit auch in der Software einzeln betrachtet werden. Allerdings müssen diese Teilsysteme parallel zu einander funktionieren. Dazu eignet sich besonders der Einsatz eines Echtzeitbetriebssystems. Aufgrund der gesammelten Erfahrung wurde entschieden das freeRTOS V8.0.0  einzusetzen.
- * \subsection Tasks
- * Die Aufgaben des Kontrollers wurden in sechs Tasks unterteilt. Die nachfolgende Abbildung zeigt diese sechs Tasks mit deren Kommunikation und Synchronisation untereinander.
- * \image html tasks.png
+ *
+ * \par 		Introduction
+ * 				Mobile Roboter benÃ¶tigen zur autonomen Navigation Informationen Ã¼ber ihr Umfeld. Diese Informationen kÃ¶nnen zur Bestimmung der eigenen Position oder zur optimalen Planung von Routen verwendet werden. In den meisten FÃ¤llen wird fÃ¼r die Datenerfassung ein LIDAR eingesetzt. LIDAR (Abk. Light Detection and Ranging) beschreibt grundsÃ¤tzlich ein Prinzip zur optischen Abstands- und Geschwindigkeitsmessung. Dabei werden elektromagnetische Strahlungen im sichtbaren oder infraroten Bereich ausgesendet und das von einem Objekt reflektierte Licht detektiert. Aus der Laufzeit und der Ausbreitungsgeschwindigkeit des Lichtes kann der Abstand berechnet werden.
+ * \par
+ * 				Dieses Projekt befasst sich mit der Entwicklung eines LIDARs, welches zum Erfassen von zweidimensionalen Umgebungskarten eingesetzt werden kann. Im Rahmen der Projektstudie und der Bachelor Thesis arbeiten Kevin Gerber und Marcel BÃ¤rtschi unter der Betreuung von Martin Kucera. Das Ziel dieser Arbeit ist ein kostengÃ¼nstiges und funktionsfÃ¤higes System zu entwickeln und herzustellen.
+ * \par
+ * 				WÃ¤hrend der Projektstudie wurde ein Konzept entwickelt, welches die vier Teilsysteme Kontroller, Kommunikation, Scanvorrichtung und Datenerfassung umfasst.
+ * 				Zur Erfassung einer Karte werden Azimut und Abstand benÃ¶tigt. Die Abstandsmessung wurde nach dem Prinzip von Time of Flight (TOF) aufgebaut. Dabei wird direkt die ZeitverzÃ¶gerung, die das ausgesendete Signal benÃ¶tigt um zum MessgerÃ¤t zurÃ¼ckzukehren, gemessen. Um die sehr kurzen Laufzeiten mit einer genÃ¼gend grossen AuflÃ¶sung zu messen, wurde ein Time to Digital Converter (TDC) von ACAM eingesetzt.
+ * \par
+ * 				\image html concept.png
+ * \par
+ * 				In der Thesis wurde das erarbeitete Konzept umgesetzt. WÃ¤hrend den acht Wochen, die zur VerfÃ¼gung standen, wurde u.a. eine Hardware entwickelt, die Mechanik konstruiert und die Software zur Steuerung des kompletten Ablaufes erstellt.
+ * \par
+ * 				Das Endprodukt prÃ¤sentiert sich als stabil laufendes LIDAR, welches die definierten Anforderungen erfÃ¼llt. Es kÃ¶nnen zweidimensionale Umgebungskarten mit einer AzimutauflÃ¶sung von 1.8Â° erfasst werden. Hindernisse werden in einem Bereich zwischen 20 cm und 3 m erkannt, deren Abstand mit einer Standardabweichung von ca. 2 cm bestimmt werden kann.
+ *
+ *
+ *
+ * \par			Architecture
+ *				\image html architecture.png
+ *
+ *
+ *
+ * \par			Software Design
+ * 				Als Kontroller wurde ein ARM Cortex M4 von ST gewÃ¤hlt. Die Bezeichnung lautet STM32F4. Die nachstehende Abbildung zeigt das Kontextdiagramm mit den Datenquellen und â€“senken (Terminatoren) aller definierten Teilsysteme.
+ * \par
+ * 				\image html context.png
+ * \par
+ * 				Die Teilsysteme weisen nur geringe AbhÃ¤ngigkeiten zueinander auf und kÃ¶nnen somit auch in der Software einzeln betrachtet werden. Allerdings mÃ¼ssen diese Teilsysteme parallel zu einander funktionieren. Dazu eignet sich besonders der Einsatz eines Echtzeitbetriebssystems. Aufgrund der gesammelten Erfahrung wurde entschieden das freeRTOS V8.0.0  einzusetzen.
+ *
+ *
+ *
+ * \par			Tasks
+ * 				Die Aufgaben des Kontrollers wurden in sechs Tasks unterteilt. Die nachfolgende Abbildung zeigt diese sechs Tasks mit deren Kommunikation und Synchronisation untereinander.
+ * \par
+ * 				\image html tasks.png
  */
